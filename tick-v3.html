@@ -1,0 +1,2551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TICK — Insert Noise Here</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════ RESET */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+
+:root {
+  --bg:        #0b0a06;
+  --bg2:       #101009;
+  --bg3:       #17160d;
+  --panel:     #1c1b11;
+  --panel2:    #232218;
+  --border:    #332f1e;
+  --border2:   #4a4428;
+  --orange:    #ff6b00;
+  --orange2:   #ff9a3c;
+  --lime:      #a8ff3e;
+  --lime2:     #d4ff8a;
+  --gold:      #c8922e;
+  --gold2:     #e8b84b;
+  --red:       #ff4444;
+  --teal:      #3effc8;
+  --text:      #e8dfc8;
+  --text-mid:  #a89d7a;
+  --text-dim:  #635d44;
+  --fighter:   #ff9a3c;
+  --wizzard:   #d4ff8a;
+  --savant:    #3effc8;
+  --healer:    #ff6b6b;
+  --enemy:     #ff4444;
+  --font-d:    'Bebas Neue', sans-serif;
+  --font-ui:   'Barlow Condensed', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Subtle noise texture overlay */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:0.6;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:1px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+/* ═══════════════════════════════════ FILIGREE DECORATORS */
+.filigree-h {
+  display:flex;align-items:center;gap:8px;
+  margin:6px 0;
+}
+.filigree-h::before,.filigree-h::after {
+  content:'';flex:1;height:1px;
+  background: linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0.5;
+}
+.filigree-diamond {
+  width:6px;height:6px;
+  background:var(--gold);
+  transform:rotate(45deg);
+  flex-shrink:0;
+}
+
+/* Corner filigree on panels */
+.panel-decorated {
+  position:relative;
+}
+.panel-decorated::before,.panel-decorated::after,
+.panel-decorated .corner-tl,.panel-decorated .corner-br {
+  content:'';
+  position:absolute;
+  width:14px;height:14px;
+  border-color:var(--gold);
+  border-style:solid;
+  opacity:0.5;
+}
+.panel-decorated::before { top:0;left:0; border-width:2px 0 0 2px; }
+.panel-decorated::after  { top:0;right:0; border-width:2px 2px 0 0; }
+.panel-decorated .corner-tl { bottom:0;left:0; border-width:0 0 2px 2px; }
+.panel-decorated .corner-br { bottom:0;right:0; border-width:0 2px 2px 0; }
+
+/* ═══════════════════════════════════ LAYOUT */
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ─── SIDENAV ─── */
+#sidenav {
+  width:210px;min-width:210px;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:relative;
+  overflow:hidden;
+}
+/* Diagonal accent stripe */
+#sidenav::after {
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  background:linear-gradient(90deg,var(--orange),var(--lime),var(--orange));
+}
+
+.nav-logo {
+  padding:22px 18px 16px;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.nav-logo-main {
+  font-family:var(--font-d);
+  font-size:48px;letter-spacing:8px;
+  line-height:1;
+  background:linear-gradient(135deg,var(--orange),var(--orange2),var(--lime));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 20px rgba(255,107,0,0.4));
+}
+.nav-logo-sub {
+  font-family:var(--font-mono);font-size:8px;
+  color:var(--text-dim);letter-spacing:3px;margin-top:2px;
+}
+.nav-logo-line {
+  height:1px;
+  background:linear-gradient(90deg,var(--orange),var(--lime),transparent);
+  margin-top:10px;opacity:0.5;
+}
+
+.nav-section{padding:10px 0 4px}
+.nav-section-label {
+  font-family:var(--font-mono);font-size:9px;
+  letter-spacing:3px;color:var(--text-dim);
+  padding:0 16px;margin-bottom:4px;text-transform:uppercase;
+}
+.nav-item {
+  display:flex;align-items:center;gap:10px;
+  padding:9px 16px;cursor:pointer;
+  color:var(--text-mid);font-weight:500;font-size:14px;
+  letter-spacing:0.5px;transition:all 0.15s;
+  border-left:2px solid transparent;
+  position:relative;
+}
+.nav-item:hover{color:var(--text);background:rgba(255,107,0,0.04)}
+.nav-item.active{color:var(--orange);background:rgba(255,107,0,0.08);border-left-color:var(--orange)}
+.nav-icon{font-size:14px;width:18px;text-align:center;opacity:0.8}
+
+.nav-session {
+  margin-top:auto;
+  border-top:1px solid var(--border);
+  padding:12px 16px;
+  background:var(--bg3);
+}
+.session-label{font-size:9px;color:var(--text-dim);font-family:var(--font-mono);letter-spacing:2px;margin-bottom:4px}
+.session-code{font-family:var(--font-mono);font-size:16px;color:var(--gold2);letter-spacing:4px;margin-bottom:4px}
+.session-role{font-size:11px;color:var(--text-dim);margin-bottom:6px}
+.session-dot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-mid);margin-bottom:2px}
+.session-dot::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--lime);box-shadow:0 0 5px var(--lime);flex-shrink:0}
+
+/* ─── MAIN ─── */
+#main-content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+
+.page-header {
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  padding:0 22px;height:50px;
+  display:flex;align-items:center;gap:14px;
+  flex-shrink:0;
+  position:relative;
+}
+.page-header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,var(--orange),transparent 60%);
+  opacity:0.4;
+}
+.page-title{font-family:var(--font-d);font-size:24px;letter-spacing:4px;color:var(--text)}
+.page-subtitle{font-size:11px;color:var(--text-dim);font-family:var(--font-mono);letter-spacing:1px}
+.header-actions{margin-left:auto;display:flex;gap:7px;align-items:center}
+
+.page-body{flex:1;overflow-y:auto;padding:22px}
+
+/* Pages */
+.page{display:none;flex-direction:column;height:100%}
+.page.active{display:flex}
+
+/* ═══════════════════════════════════ COMPONENTS */
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-ui);font-weight:600;font-size:13px;letter-spacing:1px;padding:7px 14px;border:1px solid;cursor:pointer;transition:all 0.15s;text-transform:uppercase;white-space:nowrap;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.btn-primary{background:var(--orange);border-color:var(--orange);color:#000}
+.btn-primary:hover{background:var(--orange2);border-color:var(--orange2);box-shadow:0 0 20px rgba(255,107,0,0.4)}
+.btn-lime{background:var(--lime);border-color:var(--lime);color:#000}
+.btn-lime:hover{background:var(--lime2);box-shadow:0 0 20px rgba(168,255,62,0.4)}
+.btn-outline{background:transparent;border-color:var(--border2);color:var(--text-mid)}
+.btn-outline:hover{border-color:var(--orange);color:var(--orange)}
+.btn-danger{background:transparent;border-color:var(--red);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-gold{background:transparent;border-color:var(--gold);color:var(--gold)}
+.btn-gold:hover{background:var(--gold);color:#000}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-xs{padding:2px 7px;font-size:10px}
+.btn:disabled{opacity:0.3;cursor:not-allowed}
+
+/* Inputs */
+.form-group{margin-bottom:13px}
+.form-label{display:block;font-size:10px;color:var(--text-dim);font-family:var(--font-mono);letter-spacing:2px;margin-bottom:5px;text-transform:uppercase}
+input[type=text],input[type=number],input[type=password],textarea,select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font-ui);font-size:14px;padding:8px 11px;width:100%;outline:none;transition:border-color 0.15s;clip-path:none}
+input:focus,textarea:focus,select:focus{border-color:var(--orange)}
+input::placeholder,textarea::placeholder{color:var(--text-dim)}
+select option{background:var(--panel)}
+textarea{resize:vertical;min-height:70px}
+
+/* Cards */
+.card{background:var(--panel);border:1px solid var(--border);padding:14px}
+.card-title{font-family:var(--font-d);font-size:18px;letter-spacing:2px;margin-bottom:4px}
+
+/* Grids */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* Section header */
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-title{font-family:var(--font-d);font-size:22px;letter-spacing:4px;color:var(--orange);white-space:nowrap}
+.section-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+.section-tag{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;white-space:nowrap}
+
+/* Tags */
+.tag{display:inline-block;font-family:var(--font-mono);font-size:10px;padding:2px 6px;background:var(--bg3);border:1px solid var(--border2);color:var(--text-dim);letter-spacing:1px}
+.class-tag{display:inline-block;font-family:var(--font-mono);font-size:10px;padding:2px 7px;border:1px solid currentColor;letter-spacing:1px;text-transform:uppercase}
+.class-Fighter{color:var(--fighter)}
+.class-Wizzard{color:var(--wizzard)}
+.class-Savant{color:var(--savant)}
+.class-Healer{color:var(--healer)}
+.class-Enemy{color:var(--enemy)}
+
+/* HP bar */
+.hp-bar-wrap{height:3px;background:var(--bg3);border-radius:0;overflow:hidden}
+.hp-bar-fill{height:100%;transition:width 0.4s,background 0.4s}
+
+/* Tooltip */
+.tt{position:relative}
+.tt:hover .tt-box{display:block}
+.tt-box{display:none;position:absolute;z-index:200;background:var(--panel2);border:1px solid var(--border2);padding:6px 10px;font-size:11px;color:var(--text);white-space:nowrap;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(4px)}
+.modal-backdrop.hidden{display:none}
+.modal{background:var(--panel2);border:1px solid var(--border2);border-top:2px solid var(--orange);width:520px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 30px 90px rgba(0,0,0,0.9),0 0 40px rgba(255,107,0,0.08)}
+.modal-header{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--font-d);font-size:22px;letter-spacing:3px;color:var(--orange)}
+.modal-close{cursor:pointer;color:var(--text-dim);font-size:18px;line-height:1}
+.modal-close:hover{color:var(--orange)}
+.modal-body{padding:20px}
+.modal-footer{padding:13px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* Toast */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--panel2);border:1px solid var(--border2);border-left:3px solid var(--orange);padding:10px 15px;font-size:13px;min-width:220px;animation:slideIn 0.2s ease}
+.toast.toast-error{border-left-color:var(--red)}
+.toast.toast-success{border-left-color:var(--lime)}
+.toast.toast-warn{border-left-color:var(--gold)}
+@keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1}}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:15px}
+.tab{padding:9px 17px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim);letter-spacing:1px;border-bottom:2px solid transparent;transition:all 0.15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+/* Misc */
+.flex{display:flex}.flex-1{flex:1}.gap-4{gap:4px}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
+.text-dim{color:var(--text-dim)}.text-mid{color:var(--text-mid)}.text-orange{color:var(--orange)}
+.text-lime{color:var(--lime)}.text-gold{color:var(--gold2)}.text-red{color:var(--red)}
+.text-mono{font-family:var(--font-mono)}.text-sm{font-size:12px}.text-xs{font-size:11px}
+.hidden{display:none!important}
+.divider{height:1px;background:var(--border);margin:14px 0}
+
+/* ═══════════════════════════════════ LANDING */
+#page-landing .page-body{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:28px;background:radial-gradient(ellipse at 50% 40%,rgba(255,107,0,0.06),transparent 70%)}
+.landing-hero{
+  font-family:var(--font-d);font-size:110px;letter-spacing:24px;line-height:1;
+  background:linear-gradient(135deg,var(--orange) 0%,var(--orange2) 40%,var(--lime) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 40px rgba(255,107,0,0.35));
+}
+.landing-tagline{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);letter-spacing:5px}
+.landing-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.landing-actions .btn{padding:11px 26px;font-size:14px}
+.landing-join{border:1px solid var(--border2);background:var(--panel);padding:22px;width:420px;max-width:92vw;position:relative}
+.landing-join::before,.landing-join::after{content:'';position:absolute;width:12px;height:12px;border-color:var(--gold);border-style:solid;opacity:0.5}
+.landing-join::before{top:0;left:0;border-width:2px 0 0 2px}
+.landing-join::after{bottom:0;right:0;border-width:0 2px 2px 0}
+.landing-join h3{font-family:var(--font-d);font-size:20px;letter-spacing:4px;margin-bottom:14px;color:var(--text-mid)}
+
+/* ═══════════════════════════════════ CHARACTERS */
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.char-card{background:var(--panel);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;overflow:hidden;position:relative}
+.char-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--orange),var(--lime));transform:scaleX(0);transition:transform 0.2s;transform-origin:left}
+.char-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 10px 35px rgba(0,0,0,0.5)}
+.char-card:hover::before{transform:scaleX(1)}
+.char-card-accent{height:4px}
+.char-card-body{padding:14px}
+.char-card-name{font-family:var(--font-d);font-size:24px;letter-spacing:2px;margin-bottom:2px}
+.char-card-meta{font-size:11px;font-family:var(--font-mono);margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.char-card-stats{display:flex;gap:6px}
+.char-card-stat{background:var(--bg3);border:1px solid var(--border);padding:5px 7px;text-align:center;flex:1}
+.char-card-stat strong{display:block;font-family:var(--font-d);font-size:18px;color:var(--orange);line-height:1}
+.char-card-stat span{font-size:9px;color:var(--text-dim);font-family:var(--font-mono)}
+.char-card-footer{padding:9px 14px;border-top:1px solid var(--border);display:flex;gap:5px}
+.char-new-card{background:transparent;border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;min-height:160px;color:var(--text-dim);transition:all 0.15s;font-family:var(--font-mono);font-size:10px;letter-spacing:2px}
+.char-new-card:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,107,0,0.03)}
+.char-new-card .new-icon{font-size:30px;opacity:0.3}
+
+/* ═══════════════════════════════════ CHARACTER SHEET (PDF-style) */
+.char-sheet-wrap{padding:20px;background:var(--bg);min-height:100%;display:flex;justify-content:center}
+.char-sheet {
+  width:680px;max-width:100%;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  padding:24px;
+  position:relative;
+  /* corner filigree */
+  box-shadow:0 0 0 1px var(--border),0 20px 60px rgba(0,0,0,0.6);
+}
+/* Top accent bar */
+.char-sheet::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--orange),var(--lime),var(--orange));
+}
+
+/* Name badge - diamond/chevron shape */
+.sheet-name-row{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.sheet-name-badge{
+  flex:1;
+  background:transparent;
+  border:1.5px solid var(--border2);
+  padding:10px 20px;
+  font-family:var(--font-d);font-size:26px;letter-spacing:3px;
+  color:var(--text);
+  text-align:center;
+  position:relative;
+  clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,18px 100%,0 50%);
+  background:var(--panel2);
+}
+/* Hexagon shapes for AC/HP */
+.sheet-hex-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
+.sheet-hex-label{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;text-align:center}
+.sheet-hex{
+  width:56px;height:56px;
+  background:var(--panel2);
+  clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-d);font-size:22px;color:var(--orange);
+  border:none;position:relative;
+}
+.sheet-hex-inner{position:relative;z-index:1;}
+/* Hex border via outline hex */
+.sheet-hex-outer{
+  width:62px;height:62px;
+  clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+  background:var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:2px;
+}
+
+/* Filigree separator */
+.sheet-separator{
+  display:flex;align-items:center;gap:6px;margin:10px 0;
+}
+.sheet-sep-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.4}
+.sheet-sep-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;opacity:0.6}
+
+/* Top info row */
+.sheet-top-info{display:grid;grid-template-columns:auto 1fr auto;gap:16px;margin-bottom:4px;align-items:center}
+
+/* Left box: Stored frames + Stress + MOM */
+.sheet-bubbles{
+  background:var(--panel2);border:1px solid var(--border2);
+  padding:12px;display:flex;flex-direction:column;gap:10px;min-width:130px;
+  position:relative;
+}
+.sheet-bubbles::before,.sheet-bubbles::after{content:'';position:absolute;width:10px;height:10px;border-color:var(--gold);border-style:solid;opacity:0.4}
+.sheet-bubbles::before{top:0;left:0;border-width:1px 0 0 1px}
+.sheet-bubbles::after{bottom:0;right:0;border-width:0 1px 1px 0}
+.bubble-group-label{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:5px;text-align:center}
+.bubble-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.bubble {
+  width:22px;height:22px;border-radius:50%;
+  border:1.5px solid var(--border2);
+  background:transparent;cursor:pointer;transition:all 0.15s;
+  flex-shrink:0;
+}
+.bubble.filled-orange{background:var(--orange);border-color:var(--orange);box-shadow:0 0 8px rgba(255,107,0,0.5)}
+.bubble.filled-red{background:var(--red);border-color:var(--red);box-shadow:0 0 8px rgba(255,68,68,0.5)}
+.bubble:hover{border-color:var(--orange)}
+.mom-row{display:flex;align-items:center;gap:6px}
+.mom-label{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px}
+.mom-val{font-family:var(--font-mono);font-size:14px;color:var(--gold2);border-bottom:1px solid var(--border2);min-width:40px;text-align:center}
+
+/* Middle: Features + Perks */
+.sheet-features-perks{display:flex;flex-direction:column;gap:8px}
+.sheet-features-perks .fp-box{background:var(--panel2);border:1px solid var(--border2);padding:10px}
+.fp-box-label{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:8px;text-align:center}
+.fp-line{border-bottom:1px solid var(--border);margin-bottom:8px;padding-bottom:4px;font-size:13px;color:var(--text-mid);min-height:20px}
+
+/* Right: Attribute pillars */
+.sheet-attrs{display:flex;flex-direction:column;gap:10px}
+.attr-pillar{background:var(--panel2);border:1px solid var(--border2);padding:10px 12px}
+.attr-pillar-name{font-family:var(--font-d);font-size:18px;letter-spacing:3px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.attr-pillar-name::after{content:'';flex:1;height:1px;background:var(--border2)}
+.attr-die{font-family:var(--font-mono);font-size:10px;color:var(--orange);margin-bottom:8px}
+.attr-skill-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.attr-skill-name{font-size:11px;color:var(--text-mid);width:60px;flex-shrink:0;font-family:var(--font-mono);font-size:10px}
+.attr-pips{display:flex;gap:3px}
+.attr-pip{width:11px;height:11px;border-radius:50%;border:1px solid var(--border2);background:transparent;cursor:pointer;transition:all 0.1s}
+.attr-pip.filled{background:var(--orange);border-color:var(--orange)}
+.attr-pip:hover{border-color:var(--orange)}
+
+/* Passive ability */
+.sheet-passive{background:var(--panel2);border:1px solid var(--border2);padding:10px;margin-bottom:10px}
+.sheet-passive-label{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:6px}
+.sheet-passive-content{font-size:13px;color:var(--text-mid);min-height:18px}
+
+/* Ability table */
+.sheet-table{width:100%;border-collapse:collapse;margin-bottom:10px}
+.sheet-table th{
+  background:var(--panel);padding:7px 8px;text-align:left;
+  font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);
+  border:1px solid var(--border2);text-transform:uppercase;
+}
+.sheet-table th.fc-th{width:30px;text-align:center}
+.sheet-table td{padding:8px;border:1px solid var(--border);font-size:13px;color:var(--text-mid);vertical-align:middle}
+.sheet-table td.fc-cell{
+  text-align:center;font-family:var(--font-d);font-size:20px;letter-spacing:1px;
+  color:var(--orange);background:rgba(255,107,0,0.05);width:30px;
+}
+.sheet-table tr:nth-child(3) td,.sheet-table tr:nth-child(3) td.fc-cell{border-top:2px solid var(--orange);} /* FC3 break */
+.sheet-table tr:hover td{background:rgba(255,107,0,0.03)}
+
+/* Trigger row */
+.sheet-trigger{display:grid;grid-template-columns:100px 1fr 70px;border:1px solid var(--border2);margin-bottom:6px}
+.sheet-trigger-cell{padding:8px;border-right:1px solid var(--border);font-size:12px;color:var(--text-mid)}
+.sheet-trigger-cell:last-child{border-right:none;text-align:center}
+.sheet-trigger-cell.header{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;background:var(--panel);text-transform:uppercase;padding:5px 8px}
+
+/* Charges circles */
+.charge-pips{display:flex;gap:3px;justify-content:center;flex-wrap:wrap}
+.charge-pip{width:12px;height:12px;border-radius:50%;border:1px solid var(--lime);background:transparent;cursor:pointer;transition:all 0.1s}
+.charge-pip.filled{background:var(--lime);box-shadow:0 0 5px var(--lime)}
+
+/* ═══════════════════════════════════ BUILDER */
+.builder-layout{display:grid;grid-template-columns:220px 1fr;gap:0;height:100%;overflow:hidden}
+.builder-steps{background:var(--bg2);border-right:1px solid var(--border);padding:14px;overflow-y:auto}
+.builder-step-item{display:flex;align-items:center;gap:9px;padding:9px 10px;cursor:pointer;border-left:2px solid transparent;color:var(--text-dim);transition:all 0.15s;font-size:13px}
+.builder-step-item:hover{color:var(--text)}
+.builder-step-item.active{border-left-color:var(--orange);color:var(--orange)}
+.builder-step-item.done{color:var(--lime)}
+.step-num{width:20px;height:20px;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--font-mono);flex-shrink:0}
+.builder-content{overflow-y:auto;padding:22px;flex:1}
+
+/* Class selector */
+.class-selector{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.class-option{background:var(--panel);border:2px solid var(--border);padding:14px;cursor:pointer;transition:all 0.15s;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))}
+.class-option:hover{border-color:var(--border2)}
+.class-option.selected{border-color:var(--orange);background:rgba(255,107,0,0.06)}
+.class-option-name{font-family:var(--font-d);font-size:26px;letter-spacing:3px;margin-bottom:2px}
+.class-option-role{font-size:10px;font-family:var(--font-mono);color:var(--text-dim);margin-bottom:8px;letter-spacing:1px}
+.class-option-desc{font-size:13px;color:var(--text-mid);line-height:1.6}
+.class-option-bonus{font-size:11px;margin-top:8px;font-family:var(--font-mono)}
+
+/* AFC options */
+.afc-section{margin-bottom:22px}
+.afc-label{font-family:var(--font-d);font-size:16px;letter-spacing:3px;color:var(--gold2);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.fc-badge{background:var(--gold);color:#000;font-family:var(--font-mono);font-size:10px;padding:2px 7px;letter-spacing:1px}
+.afc-option{background:var(--panel);border:1px solid var(--border);padding:9px 12px;cursor:pointer;transition:all 0.15s;display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;align-items:center;margin-bottom:5px}
+.afc-option:hover{border-color:var(--border2)}
+.afc-option.selected{border-color:var(--orange);background:rgba(255,107,0,0.05)}
+.afc-option-name{font-weight:600;font-size:14px}
+.afc-option-desc{font-size:11px;color:var(--text-dim);margin-top:2px}
+.afc-stat{text-align:center;font-family:var(--font-mono);font-size:10px}
+.afc-stat-val{display:block;font-size:14px;color:var(--orange)}
+.afc-stat-lbl{color:var(--text-dim);font-size:9px}
+
+/* Perks */
+.perk-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.perk-option{background:var(--panel);border:1px solid var(--border);padding:10px;cursor:pointer;transition:all 0.15s}
+.perk-option:hover{border-color:var(--border2)}
+.perk-option.selected{border-color:var(--lime);background:rgba(168,255,62,0.04)}
+.perk-option-name{font-weight:600;font-size:13px;margin-bottom:2px}
+.perk-option-desc{font-size:11px;color:var(--text-dim);line-height:1.5}
+
+/* Dice/skill step */
+.dice-allocator{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.dice-row{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);padding:10px 14px}
+.dice-label{width:70px;font-family:var(--font-d);font-size:20px;letter-spacing:2px}
+.dice-desc{flex:1;font-size:11px;color:var(--text-dim);line-height:1.4}
+.skills-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.pillar-block{background:var(--panel);border:1px solid var(--border);padding:12px}
+.pillar-title{font-family:var(--font-d);font-size:18px;letter-spacing:3px;margin-bottom:2px}
+.pillar-die{font-family:var(--font-mono);font-size:10px;color:var(--orange);margin-bottom:10px}
+.skill-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.skill-name{flex:1;font-size:12px;color:var(--text-mid)}
+.skill-pips{display:flex;gap:4px}
+.skill-pip{width:13px;height:13px;border:1px solid var(--border2);cursor:pointer;background:transparent;transition:all 0.1s}
+.skill-pip.filled{background:var(--orange);border-color:var(--orange)}
+.skill-pip:hover{border-color:var(--orange)}
+
+/* ═══════════════════════════════════ RULES */
+.rules-layout{display:grid;grid-template-columns:200px 1fr;gap:0;height:100%;overflow:hidden}
+.rules-toc{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:10px 0}
+.toc-item{padding:6px 14px;cursor:pointer;font-size:12px;color:var(--text-dim);transition:all 0.1s;border-left:2px solid transparent}
+.toc-item:hover{color:var(--text);background:rgba(255,107,0,0.03)}
+.toc-item.active{border-left-color:var(--orange);color:var(--orange);background:rgba(255,107,0,0.06)}
+.toc-item.toc-h1{font-family:var(--font-d);font-size:13px;letter-spacing:2px;color:var(--text-dim);margin-top:8px}
+.cat-table{width:100%;border-collapse:collapse;margin:8px 0 18px;font-size:12px}
+.cat-table th{background:rgba(200,146,46,0.1);padding:5px 8px;text-align:left;font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--gold2);border:1px solid var(--border2);text-transform:uppercase}
+.cat-table td{padding:5px 8px;border:1px solid var(--border);color:var(--text-mid);vertical-align:top;line-height:1.4}
+.cat-table td:first-child{font-weight:600;color:var(--text);white-space:nowrap}
+.cat-table td:nth-child(4),.cat-table td:nth-child(5){font-family:var(--font-mono);font-size:11px;text-align:center;white-space:nowrap}
+.cat-table td:nth-child(4){color:var(--red)}.cat-table td:nth-child(5){color:var(--gold2)}
+.cat-table tr:hover td{background:rgba(255,107,0,0.02)}
+.trig-entry{background:rgba(168,255,62,0.04);border:1px solid rgba(168,255,62,0.15);padding:8px 10px;margin-bottom:5px}
+.trig-entry-name{font-weight:600;font-size:13px;color:var(--lime);margin-bottom:2px}
+.trig-entry-cond{font-size:12px;color:var(--text-dim)}
+.rules-content{overflow-y:auto;padding:26px 34px;max-width:800px}
+.rules-content h1{font-family:var(--font-d);font-size:38px;letter-spacing:5px;margin-bottom:6px;background:linear-gradient(90deg,var(--orange),var(--lime));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.rules-content h2{font-family:var(--font-d);font-size:24px;letter-spacing:3px;margin:28px 0 10px;color:var(--gold2);border-bottom:1px solid var(--border);padding-bottom:6px}
+.rules-content h3{font-family:var(--font-d);font-size:18px;letter-spacing:2px;margin:18px 0 7px;color:var(--orange2)}
+.rules-content p{color:var(--text-mid);line-height:1.8;margin-bottom:10px;font-size:14px}
+.rules-content ul,.rules-content ol{color:var(--text-mid);line-height:1.8;margin:6px 0 10px 18px;font-size:14px}
+.rules-content li{margin-bottom:4px}
+.rules-content .callout{background:var(--panel);border-left:3px solid var(--orange);padding:10px 14px;margin:12px 0;font-size:13px;color:var(--text)}
+.rule-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.rule-table th{background:var(--panel);padding:7px 10px;text-align:left;font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);border-bottom:1px solid var(--border2)}
+.rule-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text-mid)}
+
+/* ═══════════════════════════════════ COMBAT */
+.combat-layout{display:grid;grid-template-columns:250px 1fr 220px;gap:0;height:100%;overflow:hidden}
+.combat-col{overflow-y:auto;border-right:1px solid var(--border);padding:12px}
+.combat-col:last-child{border-right:none}
+.combat-main{overflow-y:auto;padding:14px 16px}
+.combat-col-label{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;color:var(--text-dim);margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:5px;display:flex;align-items:center;gap:6px}
+
+/* Action Track */
+.action-track-wrap{background:var(--panel);border:1px solid var(--border);padding:12px;margin-bottom:12px}
+.track-meta{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.track-big{font-family:var(--font-d);font-size:28px;letter-spacing:4px;background:linear-gradient(90deg,var(--orange),var(--lime));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.track-info{font-size:10px;font-family:var(--font-mono);color:var(--text-dim)}
+.track-info span{color:var(--orange)}
+
+.action-track{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:var(--bg3);padding:6px;border:1px solid var(--border)}
+.frame-cell{background:var(--panel);border:1px solid var(--border);min-height:68px;position:relative;display:flex;flex-direction:column;overflow:hidden;transition:border-color 0.2s}
+.frame-cell.is-current{border-color:var(--orange);box-shadow:0 0 10px rgba(255,107,0,0.2)}
+.frame-num{font-family:var(--font-mono);font-size:9px;color:var(--text-dim);padding:2px 4px;border-bottom:1px solid var(--border);text-align:center}
+.frame-cell.is-current .frame-num{color:var(--orange)}
+.frame-slots{padding:2px;display:flex;flex-direction:column;gap:1px}
+.frame-slot{font-size:9px;padding:2px 3px;font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.slot-channel{background:rgba(255,107,0,0.2);color:var(--orange);border-left:2px solid var(--orange)}
+.slot-resolve{background:rgba(168,255,62,0.3);color:var(--lime2);border-left:2px solid var(--lime);font-weight:bold}
+.slot-stun{background:rgba(255,68,68,0.2);color:var(--red);border-left:2px solid var(--red)}
+.slot-stored{background:rgba(200,146,46,0.15);color:var(--gold2);border-left:2px solid var(--gold)}
+.slot-enemy-ch{background:rgba(255,68,68,0.1);color:var(--red);border-left:2px solid var(--enemy)}
+.slot-enemy-res{background:rgba(255,68,68,0.35);color:#fff;border-left:2px solid var(--red);font-weight:bold}
+
+/* Combatant cards */
+.combat-char-card{background:var(--panel);border:1px solid var(--border);margin-bottom:7px;overflow:hidden;transition:border-color 0.15s;position:relative}
+.combat-char-card.is-active{border-color:var(--lime);box-shadow:0 0 10px rgba(168,255,62,0.1)}
+.combat-char-card.is-down{opacity:0.4}
+.combat-char-card.is-enemy{border-color:rgba(255,68,68,0.3)}
+.combat-char-card.is-enemy.is-active{border-color:var(--enemy)}
+.ccc-stripe{height:2px;width:100%}
+.ccc-header{padding:7px 10px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
+.ccc-name{font-family:var(--font-d);font-size:16px;letter-spacing:1px;flex:1}
+.ccc-body{padding:7px 10px}
+.ccc-hp-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.ccc-hp-val{font-family:var(--font-mono);font-size:11px;margin-left:auto;white-space:nowrap}
+.ccc-stats-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px}
+.ccc-stat{background:var(--bg3);padding:2px 5px;font-family:var(--font-mono);font-size:9px;color:var(--text-dim)}
+.ccc-stat span{color:var(--text)}
+.ccc-move-row{background:var(--bg3);border:1px solid var(--border);padding:4px 7px;font-size:11px;display:flex;gap:5px;align-items:center}
+.ccc-move-name{flex:1;color:var(--lime);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.ccc-move-fc{color:var(--orange);font-family:var(--font-mono);font-size:10px}
+.ccc-actions{padding:6px 10px;display:flex;gap:3px;flex-wrap:wrap;border-top:1px solid var(--border)}
+
+/* Submit + Resolve */
+.submit-panel{background:var(--panel);border:1px solid var(--border);padding:12px;margin-bottom:10px}
+.submit-panel-title{font-family:var(--font-d);font-size:16px;letter-spacing:3px;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.resolve-panel{background:var(--panel);border:1px solid var(--lime);padding:12px;margin-bottom:10px;animation:glowLime 1.5s ease-in-out infinite alternate}
+@keyframes glowLime{from{box-shadow:0 0 6px rgba(168,255,62,0.1)}to{box-shadow:0 0 20px rgba(168,255,62,0.3)}}
+.resolve-panel-title{font-family:var(--font-d);font-size:14px;letter-spacing:3px;color:var(--lime);margin-bottom:8px}
+.resolve-card{background:var(--bg3);border:1px solid var(--border2);padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:10px}
+.resolve-card-name{font-weight:600;flex:1}
+.resolve-card-move{font-size:10px;color:var(--orange);font-family:var(--font-mono)}
+.resolve-stat{text-align:center}
+.resolve-stat-val{font-family:var(--font-mono);font-size:13px}
+.resolve-stat-val.dmg{color:var(--red)}
+.resolve-stat-val.stun{color:var(--gold2)}
+.resolve-stat-lbl{font-size:9px;color:var(--text-dim);font-family:var(--font-mono)}
+
+/* Combat Log */
+.combat-log-entry{font-family:var(--font-mono);font-size:10px;padding:3px 6px;border-left:2px solid var(--border2);color:var(--text-dim);animation:logIn 0.2s;margin-bottom:2px}
+@keyframes logIn{from{opacity:0}to{opacity:1}}
+.combat-log-entry.log-resolve{border-left-color:var(--orange);color:var(--text)}
+.combat-log-entry.log-stun{border-left-color:var(--gold);color:var(--gold2)}
+.combat-log-entry.log-damage{border-left-color:var(--red);color:var(--red)}
+.combat-log-entry.log-heal{border-left-color:var(--lime);color:var(--lime)}
+.combat-log-entry.log-track{border-left-color:var(--orange);color:var(--orange);font-weight:bold}
+.combat-log-entry.log-down{border-left-color:var(--red);color:var(--red);font-weight:bold}
+.log-ts{color:var(--text-dim);margin-right:4px}
+
+/* Lobby */
+.lobby-max{max-width:580px;margin:0 auto}
+.session-card{background:var(--panel);border:1px solid var(--border);padding:18px;margin-bottom:12px;position:relative}
+.session-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--orange),transparent)}
+.session-card-title{font-family:var(--font-d);font-size:20px;letter-spacing:4px;margin-bottom:8px;color:var(--orange)}
+.session-code-display{font-family:var(--font-mono);font-size:28px;letter-spacing:10px;color:var(--gold2);text-align:center;padding:14px;background:var(--bg3);border:1px solid var(--border2);margin:10px 0;cursor:pointer;user-select:all;transition:border-color 0.15s}
+.session-code-display:hover{border-color:var(--gold)}
+
+/* FC penalty banner */
+.penalty-banner{background:rgba(255,68,68,0.1);border:1px solid var(--red);padding:7px 12px;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;color:var(--red);display:flex;align-items:center;gap:8px}
+.penalty-banner-blink{animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SIDENAV -->
+  <nav id="sidenav">
+    <div class="nav-logo">
+      <div class="nav-logo-main">TICK</div>
+      <div class="nav-logo-sub">INSERT NOISE HERE</div>
+      <div class="nav-logo-line"></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">MAIN</div>
+      <div class="nav-item active" data-page="landing" onclick="navigate('landing')"><span class="nav-icon">◈</span> Home</div>
+      <div class="nav-item" data-page="characters" onclick="navigate('characters')"><span class="nav-icon">⬡</span> Characters</div>
+      <div class="nav-item" data-page="rules" onclick="navigate('rules')"><span class="nav-icon">◉</span> Compendium</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">SESSION</div>
+      <div class="nav-item" data-page="lobby" onclick="navigate('lobby')"><span class="nav-icon">◫</span> Session Lobby</div>
+      <div class="nav-item" data-page="combat" onclick="navigate('combat')"><span class="nav-icon">⚡</span> Combat</div>
+    </div>
+    <div class="nav-session">
+      <div class="session-label">SESSION</div>
+      <div class="session-code" id="nav-session-code">——</div>
+      <div class="session-role" id="nav-session-role">Not in session</div>
+      <div id="nav-session-players"></div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main-content">
+
+    <!-- LANDING -->
+    <div class="page active" id="page-landing">
+      <div class="page-body">
+        <div><div class="landing-hero">TICK</div><div class="landing-tagline">INSERT NOISE HERE // TTRPG COMBAT SYSTEM</div></div>
+        <div class="landing-actions">
+          <button class="btn btn-primary" onclick="navigate('characters')">⬡ Characters</button>
+          <button class="btn btn-lime" onclick="navigate('rules')">◉ Compendium</button>
+          <button class="btn btn-gold" onclick="navigate('lobby')">◫ Session</button>
+        </div>
+        <div class="landing-join">
+          <h3>QUICK START</h3>
+          <div class="form-group"><label class="form-label">Your Name</label><input type="text" id="quick-name" placeholder="Enter your name..."></div>
+          <div class="form-group"><label class="form-label">Session Code (blank = create as DM)</label><input type="text" id="quick-code" placeholder="TICK-XXXX" style="letter-spacing:3px;text-transform:uppercase;font-family:var(--font-mono);" maxlength="10"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" style="flex:1" onclick="quickCreate()">Create (DM)</button>
+            <button class="btn btn-outline" style="flex:1" onclick="quickJoin()">Join Session</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARACTERS -->
+    <div class="page" id="page-characters">
+      <div class="page-header">
+        <div class="page-title">CHARACTERS</div>
+        <div class="header-actions"><button class="btn btn-primary" onclick="startNewChar()">+ New Character</button></div>
+      </div>
+      <div class="page-body"><div class="char-grid" id="char-grid"></div></div>
+    </div>
+
+    <!-- CHARACTER BUILDER -->
+    <div class="page" id="page-builder">
+      <div class="page-header">
+        <div class="page-title">CHARACTER BUILDER</div>
+        <div id="builder-name-display" class="page-subtitle"></div>
+        <div class="header-actions">
+          <button class="btn btn-outline btn-sm" onclick="navigate('characters')">✕ Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="saveChar()">Save Character</button>
+        </div>
+      </div>
+      <div style="display:flex;height:calc(100vh - 50px);overflow:hidden;">
+        <div class="builder-steps">
+          <div class="builder-step-item active" data-step="0" onclick="gotoStep(0)"><div class="step-num">1</div> Identity</div>
+          <div class="builder-step-item" data-step="1" onclick="gotoStep(1)"><div class="step-num">2</div> Class</div>
+          <div class="builder-step-item" data-step="2" onclick="gotoStep(2)"><div class="step-num">3</div> Dice & Skills</div>
+          <div class="builder-step-item" data-step="3" onclick="gotoStep(3)"><div class="step-num">4</div> Known Catalog</div>
+          <div class="builder-step-item" data-step="4" onclick="gotoStep(4)"><div class="step-num">5</div> Trigger</div>
+          <div class="builder-step-item" data-step="5" onclick="gotoStep(5)"><div class="step-num">6</div> Perks & Features</div>
+          <div class="builder-step-item" data-step="6" onclick="gotoStep(6)"><div class="step-num">7</div> Summary</div>
+        </div>
+        <div class="builder-content" id="builder-content"></div>
+      </div>
+    </div>
+
+    <!-- CHAR SHEET VIEW -->
+    <div class="page" id="page-charsheet">
+      <div class="page-header">
+        <div class="page-title" id="sheet-page-title">CHARACTER SHEET</div>
+        <div class="header-actions">
+          <button class="btn btn-outline btn-sm" onclick="navigate('characters')">← Back</button>
+          <button class="btn btn-gold btn-sm" id="sheet-edit-btn">Edit Character</button>
+          <button class="btn btn-lime btn-sm" id="sheet-combat-btn">→ Combat</button>
+        </div>
+      </div>
+      <div class="page-body" style="padding:0;background:var(--bg);">
+        <div class="char-sheet-wrap" id="char-sheet-content"></div>
+      </div>
+    </div>
+
+    <!-- RULES -->
+    <div class="page" id="page-rules">
+      <div class="page-header"><div class="page-title">COMPENDIUM</div><div class="page-subtitle">// TICK v0.1</div></div>
+      <div class="rules-layout" style="height:calc(100vh - 50px);">
+        <div class="rules-toc" id="rules-toc"></div>
+        <div class="rules-content" id="rules-content"></div>
+      </div>
+    </div>
+
+    <!-- LOBBY -->
+    <div class="page" id="page-lobby">
+      <div class="page-header"><div class="page-title">SESSION LOBBY</div></div>
+      <div class="page-body"><div class="lobby-max" id="lobby-content"></div></div>
+    </div>
+
+    <!-- COMBAT -->
+    <div class="page" id="page-combat">
+      <div class="page-header">
+        <div class="page-title">COMBAT</div>
+        <div class="page-subtitle" id="combat-subtitle">// TRACK 1 : FRAME 1</div>
+        <div class="header-actions" id="combat-header-btns"></div>
+      </div>
+      <div class="combat-layout" style="height:calc(100vh - 50px);">
+        <div class="combat-col" id="combat-left"></div>
+        <div class="combat-main" id="combat-center"></div>
+        <div class="combat-col" id="combat-right">
+          <div class="combat-col-label"><span class="penalty-banner-blink">◈</span> COMBAT LOG</div>
+          <div id="combat-log"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app -->
+
+<!-- Modal -->
+<div class="modal-backdrop hidden" id="modal-backdrop">
+  <div class="modal" id="modal-box">
+    <div class="modal-header"><div class="modal-title" id="modal-title"></div><div class="modal-close" onclick="closeModal()">✕</div></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+<div id="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA TABLES
+// ══════════════════════════════════════════════
+const CLASSES = {
+  Fighter:{ color:'var(--fighter)', role:'Weapon Specialist / Field Control', desc:'A combat specialist who excels in field control through weapons, focusing on dealing damage. Can conjure any basic weapon.', bonus:'+1 damage on all basic punches' },
+  Wizzard: { color:'var(--wizzard)', role:'Spellcaster / Ranged Fighter', desc:'A spellcaster using obscure methods, winning through creativity and stun rather than raw damage.', bonus:'-1 damage on all basic punches' },
+  Savant:  { color:'var(--savant)',  role:'Support / Indirect Damage', desc:'Support class focused on helping allies and affecting the battlefield through mechanics and constructs.', bonus:'+0 on all basic punches' },
+  Healer:  { color:'var(--healer)',  role:'Support / Healer', desc:'Support with primary focus on healing. Replaces punch with Healing Touch (D6 heal).', bonus:'Punch → Healing Touch (D6 heal)' }
+};
+
+const CATALOG = {
+  Fighter:{
+    fc3:[
+      {name:'Bladed Strike',desc:'Use Imagination',mod:'Body',range:'1 Space',dmg:4,stun:0},
+      {name:'Shoot',desc:'Use Imagination',mod:'Body',range:'5-9 Spaces',dmg:3,stun:0},
+      {name:'Lunge',desc:'Use Imagination',mod:'Body',range:'2 Spaces',dmg:3,stun:0},
+      {name:'Wack',desc:'Use Imagination',mod:'Body',range:'1 Space',dmg:2,stun:2},
+      {name:'Hurl',desc:'Use Imagination',mod:'Body',range:'3-4 Spaces',dmg:2,stun:1},
+    ],
+    fc4:[
+      {name:'Flurry of Blows',desc:'3 direct attacks',mod:'Body',range:'1 Space',dmg:'1/strike',stun:'1/strike'},
+      {name:'Tri-Shot',desc:'Shoot 3 arrows',mod:'Body',range:'5-9 Spaces',dmg:'2/strike',stun:0},
+      {name:'Feint',desc:'Advantage on Bladed Strike',mod:'Mind',range:'1 Space',dmg:4,stun:1},
+      {name:'Bash',desc:'Use Imagination',mod:'Body',range:'1 Space',dmg:5,stun:2},
+      {name:'Trick Shot',desc:'Use Imagination, think creatively',mod:'Mind/Body',range:'3-8 Spaces',dmg:3,stun:3},
+    ],
+    fc5:[
+      {name:'Charge Slam',desc:'Charge 6 spaces + melee attack',mod:'Body',range:'1-6 Spaces',dmg:6,stun:2},
+      {name:'Bomb Attack',desc:'Center hit, radius 2 spaces',mod:'Mind/Spirit',range:'5-9 Spaces',dmg:'5/4/2',stun:'4/2/2'},
+      {name:'Impale',desc:'Teleport 7 spaces behind target, advantage',mod:'Body',range:'6 Spaces',dmg:6,stun:4},
+      {name:'Fling',desc:'Ranged attack with melee weapon',mod:'Mind/Body',range:'3-5 Spaces',dmg:8,stun:2},
+      {name:'Stomp',desc:'Shockwave radius 3 spaces from self',mod:'Body',range:'Self-3 AOE',dmg:4,stun:3},
+    ],
+    triggers:[
+      {name:'Parry',cond:'Enemy misses → make free FC3 attack (stress to raise FC)'},
+      {name:'Drugs',cond:'Enemy deals damage → heal half (rounded up), clear stress'},
+      {name:'JC',cond:'Enemy successfully attacks → stop attack, stun enemy 2 frames'},
+    ]
+  },
+  Wizzard:{
+    fc3:[
+      {name:'Tome Slap',desc:'Summon book and hit target',mod:'Body',range:'1-2 Spaces',dmg:1,stun:1},
+      {name:'Lightning Bolt',desc:'Think Thor, Use Imagination',mod:'Mind',range:'5-10 Spaces',dmg:3,stun:0},
+      {name:'Water Bending',desc:'Smack target with water',mod:'Mind',range:'5-10 Spaces',dmg:2,stun:1},
+      {name:'Gust',desc:'Push target+adjacent back 2 spaces',mod:'Mind',range:'1-4 Spaces',dmg:0,stun:2},
+      {name:'Bush',desc:'Active camo (disadvantage on attacks to you)',mod:'Mind',range:'Self',dmg:0,stun:0},
+    ],
+    fc4:[
+      {name:'Hail',desc:'Pelt target with ice from cloud',mod:'Mind',range:'5-10 Spaces',dmg:4,stun:3},
+      {name:'Magic Missile',desc:'Automatic hit, no roll needed',mod:'—',range:'5-10 Spaces',dmg:2,stun:2},
+      {name:'Lazer',desc:'3-space line starting 4 away',mod:'Mind',range:'4-7 Spaces',dmg:5,stun:1},
+      {name:'Fall',desc:'Drop a 250lb object on target',mod:'Mind',range:'1-7 Spaces',dmg:3,stun:3},
+      {name:'Teleport',desc:'Move a willing target 7 spaces',mod:'Willing',range:'1-7 Spaces',dmg:0,stun:0},
+    ],
+    fc5:[
+      {name:'Tornado',desc:'Whirlwind center, radius 2',mod:'Mind',range:'1-8 Spaces',dmg:'5/4/2',stun:'4/2/0'},
+      {name:'Summon Fist',desc:'Big fist grabs target',mod:'Mind/Body',range:'5-10 Spaces',dmg:0,stun:5},
+      {name:'Geyser',desc:'Push all in front 5 spaces',mod:'Mind',range:'1-4 Spaces',dmg:8,stun:1},
+      {name:'Fire Ball',desc:'Big explosion radius 5',mod:'Mind',range:'3-8 Spaces',dmg:9,stun:0},
+      {name:'ILNH',desc:'Loud noise beneath target (1 target)',mod:'Mind',range:'1-8 Spaces',dmg:2,stun:4},
+    ],
+    triggers:[
+      {name:'Counter Spell',cond:'Targeted with attack → after roll, negate it'},
+      {name:'Mage Armor',cond:'If hit → AC +3 for next 10 frames'},
+      {name:'Contingency Plan',cond:'If you go down → cast equipped FC5 on your body'},
+    ]
+  },
+  Savant:{
+    fc3:[
+      {name:'Reinforce',desc:'+3 dmg/+1 stun while in contact with target',mod:'—',range:'1 Space',dmg:'+3',stun:'+1'},
+      {name:'Levitating Pebble',desc:'Hit target in orifice with pebble',mod:'Spirit',range:'2-5 Spaces',dmg:2,stun:0},
+      {name:'Armor Punch',desc:'Manifest gauntlet; 2 stun to self',mod:'Body/Spirit',range:'1 Space',dmg:3,stun:2},
+      {name:'Repair',desc:'Repair construct by 1D8',mod:'—',range:'1 Space',dmg:0,stun:0},
+      {name:'Flame Wall',desc:'3-space firewall for 10 frames',mod:'Spirit',range:'1-3 Spaces',dmg:3,stun:2},
+    ],
+    fc4:[
+      {name:'Turret',desc:'Auto-shooter, fires every 3 frames',mod:'Spirit',range:'2-5 Spaces',dmg:2,stun:1},
+      {name:'Shield',desc:'Target negates next attack',mod:'—',range:'1-5 Spaces',dmg:0,stun:0},
+      {name:'Reasonably Sized Wall',desc:'4×1×5 wall, HP30 AC3',mod:'—',range:'1-3 Spaces',dmg:0,stun:0},
+      {name:'Echo',desc:'Copy propels to target and punches',mod:'Spirit',range:'4-6 Spaces',dmg:5,stun:2},
+      {name:'Syphon',desc:'HP from one target to another',mod:'Spirit',range:'1-5 Spaces',dmg:'D6',stun:1},
+    ],
+    fc5:[
+      {name:'Animate Object',desc:'Object mobile, use abilities through it',mod:'—',range:'1 Space',dmg:0,stun:0},
+      {name:'Suit',desc:'Construct suit: AC16 HP10 around target',mod:'—',range:'1 Space',dmg:0,stun:0},
+      {name:'Piston Kick',desc:'Leg + machine = piston',mod:'Body',range:'1-2 Spaces',dmg:10,stun:0},
+      {name:'Get Over Here',desc:'Chain+knife, pull target to you',mod:'Spirit',range:'3-10 Spaces',dmg:4,stun:4},
+      {name:'Enhance',desc:'Target 2× dmg+stun on next attack',mod:'—',range:'1-10 Spaces',dmg:0,stun:0},
+    ],
+    triggers:[
+      {name:'Try Again',cond:'Target within sight makes a roll → force reroll'},
+      {name:'Lucky',cond:'Roll Nat 1 → turn it into a Nat 20'},
+      {name:"That's Not Supposed to Happen",cond:'Construct dies within 1-3 spaces → make 2 of same type'},
+    ]
+  },
+  Healer:{
+    fc3:[
+      {name:'Bind Wounds',desc:'Increase target HP by 4',mod:'—',range:'1-4',dmg:0,stun:0},
+      {name:'Transport',desc:'Move downed target 5 spaces',mod:'Mind',range:'1-8',dmg:0,stun:0},
+      {name:'Dash',desc:'Move up to 6 spaces in any direction',mod:'Body',range:'1-6',dmg:0,stun:0},
+      {name:'Apparate Armor',desc:'+1 AC for 12 frames',mod:'—',range:'1-5 Spaces',dmg:0,stun:0},
+      {name:'Life Link',desc:'Deal 2 to target, heal different target 2 HP',mod:'Spirit',range:'1 Space',dmg:2,stun:0},
+    ],
+    fc4:[
+      {name:'Magic Potion',desc:'Dump potion: heal 10 HP',mod:'—',range:'1 Space',dmg:0,stun:0},
+      {name:'Teleport',desc:'Move up to 10 spaces to ally',mod:'—',range:'1-10 Spaces',dmg:0,stun:0},
+      {name:'Water of Youth',desc:'Remove 2 stun for target within 3',mod:'—',range:'1-3 Spaces',dmg:0,stun:0},
+      {name:'Coloring Book',desc:'Give back 2 stress to target within 3',mod:'—',range:'1-3 Spaces',dmg:0,stun:0},
+      {name:'Reflects',desc:'Strong punch defense',mod:'Mind/Body',range:'1 Space',dmg:4,stun:3},
+    ],
+    fc5:[
+      {name:'Beam Me Up',desc:'Move target within 5 spaces to you (DC13)',mod:'Mind',range:'1-5 Spaces',dmg:0,stun:0},
+      {name:'Erbs',desc:'Mend wounds: target heals 15 HP',mod:'—',range:'1 Space',dmg:0,stun:1},
+      {name:'No Touchy',desc:'Safety zone, no hits in/out for 5 frames',mod:'—',range:'1 Space',dmg:0,stun:0},
+      {name:'Not Now',desc:'Next hit on target within 5 → negate dmg+stun',mod:'—',range:'1-5 Spaces',dmg:0,stun:0},
+      {name:'Life Drain',desc:'Remove half enemy HP (min 1) (DC13)',mod:'Spirit',range:'1-5 Spaces',dmg:'50%',stun:0},
+    ],
+    triggers:[
+      {name:"You're Not Dead Yet",cond:'Target goes down within sight → revive to 5 HP (not yourself)'},
+      {name:"You're Good",cond:'Ally starts track with 5+ stun → clear that ally\'s stun'},
+      {name:'Be Gone',cond:'Enemy enters space in front of you → teleport them 10 spaces back'},
+    ]
+  }
+};
+
+const PERKS = [
+  {name:'Iron Gut',desc:'Once per rest, ignore first stress-related exhaustion.'},
+  {name:'Quick Reflexes',desc:'+1 stored frame maximum.'},
+  {name:'Tactician',desc:'Once per encounter, deliberate for free (no timer).'},
+  {name:'Battle Hardened',desc:'Start every encounter with 1 momentum.'},
+  {name:'Resilient',desc:'When you go Down, do not lose stored frames.'},
+  {name:'Weapon Adept',desc:'Equip supernatural weapons in 3 frames instead of 5.'},
+  {name:'Empathic',desc:'Use Features on behalf of adjacent ally once per engagement.'},
+  {name:'Focused',desc:'Reduce one chosen AFC ability FC by 1 (chosen at creation).'},
+  {name:'Tough',desc:'+5 max HP (40 total).'},
+  {name:'Light Footed',desc:'Moving (FC1) does not cost stored frames.'},
+];
+
+// ══════════════════════════════════════════════
+//  APP STATE
+// ══════════════════════════════════════════════
+let G = {
+  page: 'landing',
+  characters: [],
+  session: null,
+  viewingCharId: null,
+  combat: {
+    combatants:[],currentFrame:1,actionTrack:1,totalFrames:0,fcPenalty:0,log:[]
+  },
+  builder: { step:0, char: makeNewChar() }
+};
+
+function makeNewChar() {
+  return {
+    id:'c'+Date.now(), name:'', backstory:'', class:'Fighter',
+    dice:{Body:'D10',Mind:'D8',Spirit:'D6'},
+    skills:{PoB:0,RoB:0,FoB:0,PoM:0,RoM:0,FoM:0,PoS:0,RoS:0,FoS:0},
+    knownCatalog:[],afc3:null,afc4:null,afc5:null,trigger:null,
+    perks:[],features:['',''],passive:'',
+    hp:35,maxHp:35,ac:5,level:1,
+    // runtime fields (not from builder)
+    stress:0,storedFrames:0,stun:0,momentum:0,triggerCharges:1
+  };
+}
+
+try { const s=localStorage.getItem('tick-chars'); if(s) G.characters=JSON.parse(s); } catch(e){}
+function saveCharsLocal() { try{ localStorage.setItem('tick-chars',JSON.stringify(G.characters)); }catch(e){} }
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  G.page = page;
+  if(page==='characters') renderCharacters();
+  if(page==='rules') renderRules();
+  if(page==='combat') renderCombat();
+  if(page==='lobby') renderLobby();
+  if(page==='charsheet') renderCharSheet(G.viewingCharId);
+}
+
+// ══════════════════════════════════════════════
+//  CHARACTERS LIST
+// ══════════════════════════════════════════════
+function renderCharacters() {
+  const g = document.getElementById('char-grid');
+  g.innerHTML = '';
+  G.characters.forEach(c => {
+    const cls = CLASSES[c.class];
+    const hpPct = Math.max(0,(c.hp/c.maxHp)*100);
+    const hpC = hpPct>60?'var(--lime)':hpPct>30?'var(--gold)':'var(--red)';
+    const d = document.createElement('div');
+    d.className='char-card';
+    d.innerHTML=`
+      <div class="char-card-accent" style="background:linear-gradient(90deg,${cls.color},transparent)"></div>
+      <div class="char-card-body">
+        <div class="char-card-name">${c.name||'Unnamed'}</div>
+        <div class="char-card-meta">
+          <span class="class-tag class-${c.class}">${c.class}</span>
+          <span class="text-dim text-mono" style="font-size:9px;">Lv.${c.level||1}</span>
+        </div>
+        <div class="hp-bar-wrap" style="margin-bottom:6px"><div class="hp-bar-fill" style="width:${hpPct}%;background:${hpC}"></div></div>
+        <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-mono);margin-bottom:9px">HP ${c.hp}/${c.maxHp} | AC ${c.ac}</div>
+        <div class="char-card-stats">
+          <div class="char-card-stat"><strong>${c.dice?.Body||'D8'}</strong><span>BODY</span></div>
+          <div class="char-card-stat"><strong>${c.dice?.Mind||'D6'}</strong><span>MIND</span></div>
+          <div class="char-card-stat"><strong>${c.dice?.Spirit||'D6'}</strong><span>SPIRIT</span></div>
+        </div>
+      </div>
+      <div class="char-card-footer">
+        <button class="btn btn-outline btn-sm" onclick="viewChar('${c.id}')">View Sheet</button>
+        <button class="btn btn-gold btn-sm" onclick="editChar('${c.id}')">Edit</button>
+        <button class="btn btn-outline btn-sm" onclick="levelUpModal('${c.id}')">↑ Level Up</button>
+        <button class="btn btn-lime btn-sm" onclick="addToCombat('${c.id}')">→ Combat</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteChar('${c.id}')">✕</button>
+      </div>
+    `;
+    g.appendChild(d);
+  });
+  const n=document.createElement('div');
+  n.className='char-new-card';n.onclick=startNewChar;
+  n.innerHTML='<div class="new-icon">+</div><div>NEW CHARACTER</div>';
+  g.appendChild(n);
+}
+
+function viewChar(id) {
+  G.viewingCharId = id;
+  const c = G.characters.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('sheet-page-title').textContent = c.name.toUpperCase() || 'CHARACTER SHEET';
+  document.getElementById('sheet-edit-btn').onclick = ()=>editChar(id);
+  document.getElementById('sheet-combat-btn').onclick = ()=>{ addToCombat(id); };
+  navigate('charsheet');
+}
+
+function editChar(id) {
+  const c = G.characters.find(x=>x.id===id);
+  if(!c) return;
+  G.builder = { step:0, char:JSON.parse(JSON.stringify(c)) };
+  navigate('builder'); gotoStep(0);
+}
+
+function deleteChar(id) {
+  if(!confirm('Delete character?')) return;
+  G.characters = G.characters.filter(x=>x.id!==id);
+  saveCharsLocal(); renderCharacters();
+}
+
+function addToCombat(id) {
+  const c = G.characters.find(x=>x.id===id);
+  if(!c) return;
+  if(G.combat.combatants.find(x=>x.charId===id)){toast('Already in combat!','warn');return;}
+  G.combat.combatants.push({
+    id:'cb'+Date.now(),charId:id,name:c.name,class:c.class,isEnemy:false,
+    hp:c.hp,maxHp:c.maxHp,ac:c.ac,stress:c.stress||0,storedFrames:c.storedFrames||0,stun:0,momentum:c.momentum||0,
+    currentMoveFC:null,currentMoveName:'',moveStartFrame:null,
+    isDown:false,conditions:[],afc3:c.afc3,afc4:c.afc4,afc5:c.afc5
+  });
+  combatLog(`${c.name} (${c.class}) entered combat!`,'resolve');
+  toast(`${c.name} added to combat!`,'success');
+  navigate('combat');
+}
+
+// ══════════════════════════════════════════════
+//  CHARACTER SHEET VIEWER
+// ══════════════════════════════════════════════
+function renderCharSheet(id) {
+  const c = G.characters.find(x=>x.id===id);
+  const el = document.getElementById('char-sheet-content');
+  if(!c){el.innerHTML='<p class="text-dim">Character not found.</p>';return;}
+  const cls = CLASSES[c.class]||{color:'var(--orange)'};
+  const sk = c.skills||{};
+  const PILLARS=[
+    {key:'Body',color:'var(--fighter)',skills:[{k:'PoB',n:'Power'},{k:'RoB',n:'Resolve'},{k:'FoB',n:'Focus'}]},
+    {key:'Mind',color:'var(--wizzard)',skills:[{k:'PoM',n:'Power'},{k:'RoM',n:'Resolve'},{k:'FoM',n:'Focus'}]},
+    {key:'Spirit',color:'var(--savant)',skills:[{k:'PoS',n:'Power'},{k:'RoS',n:'Resolve'},{k:'FoS',n:'Focus'}]},
+  ];
+  const afc3data = findAbilityData(c.class,c.afc3);
+  const afc4data = findAbilityData(c.class,c.afc4);
+  const afc5data = findAbilityData(c.class,c.afc5);
+  const trigdata = (CATALOG[c.class]?.triggers||[]).find(t=>t.name===c.trigger);
+
+  el.innerHTML=`
+  <div class="char-sheet">
+    <div class="sheet-separator"><div class="sheet-sep-line"></div><div class="sheet-sep-diamond"></div><div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:3px;padding:0 6px;">TICK // CHARACTER RECORD</div><div class="sheet-sep-diamond"></div><div class="sheet-sep-line"></div></div>
+
+    <!-- Name / AC / HP row -->
+    <div class="sheet-name-row">
+      <div class="sheet-name-badge">${c.name||'UNNAMED'}, <span style="color:${cls.color};">${c.class.toUpperCase()}</span></div>
+      <div class="sheet-hex-wrap">
+        <div class="sheet-hex-label">AC</div>
+        <div class="sheet-hex-outer"><div class="sheet-hex">${c.ac}</div></div>
+      </div>
+      <div class="sheet-hex-wrap">
+        <div class="sheet-hex-label">HP</div>
+        <div class="sheet-hex-outer" style="background:var(--border)"><div class="sheet-hex" style="background:var(--panel)">${c.hp}</div></div>
+      </div>
+    </div>
+
+    <div class="sheet-separator"><div class="sheet-sep-line"></div><div class="sheet-sep-diamond"></div><div class="sheet-sep-line"></div></div>
+
+    <!-- Middle row: Bubbles | Features+Perks | Attributes -->
+    <div style="display:grid;grid-template-columns:auto 1fr auto;gap:14px;margin-bottom:12px;align-items:start">
+
+      <!-- Left: Stored Frames + Stress + MOM -->
+      <div class="sheet-bubbles">
+        <div>
+          <div class="bubble-group-label">STORED FRAMES</div>
+          <div class="bubble-row">
+            ${[0,1,2].map(i=>`<div class="bubble ${i<(c.storedFrames||0)?'filled-orange':''}"></div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <div class="bubble-group-label">STRESS</div>
+          <div class="bubble-row">
+            ${[0,1,2,3,4].map(i=>`<div class="bubble ${i<(c.stress||0)?'filled-red':''}"></div>`).join('')}
+          </div>
+        </div>
+        <div class="mom-row">
+          <div class="mom-label">MOM</div>
+          <div class="mom-val">${c.momentum||0}</div>
+        </div>
+      </div>
+
+      <!-- Center: Features + Perks -->
+      <div class="sheet-features-perks">
+        <div class="fp-box">
+          <div class="fp-box-label">FEATURES</div>
+          <div class="fp-line">${c.features?.[0]||''}</div>
+          <div class="fp-line" style="margin-bottom:0">${c.features?.[1]||''}</div>
+        </div>
+        <div class="fp-box">
+          <div class="fp-box-label">PERKS</div>
+          ${(c.perks||[]).map(p=>`<div class="fp-line">${p}</div>`).join('')}
+          ${(c.perks||[]).length<2?'<div class="fp-line"></div>':''}
+          ${(c.perks||[]).length<1?'<div class="fp-line"></div>':''}
+        </div>
+      </div>
+
+      <!-- Right: Attribute Pillars -->
+      <div class="sheet-attrs">
+        ${PILLARS.map(p=>`
+          <div class="attr-pillar">
+            <div class="attr-pillar-name" style="color:${p.color}">${p.key}</div>
+            <div class="attr-die">${c.dice?.[p.key]||'D6'}</div>
+            ${p.skills.map(s=>`
+              <div class="attr-skill-row">
+                <div class="attr-skill-name">${s.n}</div>
+                <div class="attr-pips">
+                  ${[1,2,3,4,5].map(pip=>`<div class="attr-pip ${(sk[s.k]||0)>=pip?'filled':''}"></div>`).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Passive -->
+    <div class="sheet-passive">
+      <div class="sheet-passive-label">PASSIVE ABILITY</div>
+      <div class="sheet-passive-content">${c.passive||'—'}</div>
+    </div>
+
+    <div class="sheet-separator"><div class="sheet-sep-line"></div><div class="sheet-sep-diamond"></div><div class="sheet-sep-line"></div></div>
+
+    <!-- Ability Table -->
+    <table class="sheet-table">
+      <thead>
+        <tr>
+          <th class="fc-th">FC</th>
+          <th>Description</th>
+          <th>Skill Mod</th>
+          <th>Range</th>
+          <th>Damage</th>
+          <th>Stun</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fc-cell">1</td>
+          <td>Move — Move 1 space</td>
+          <td>—</td><td>Self</td><td>—</td><td>—</td>
+        </tr>
+        <tr>
+          <td class="fc-cell">2</td>
+          <td>${c.class==='Healer'?'Healing Touch — Heal target (D6)':'Punch / Kick / Grab / Interact'}</td>
+          <td>${c.class==='Healer'?'Spirit':'Dex or Str'}</td>
+          <td>1 Space</td>
+          <td>${c.class==='Healer'?'D6 Heal':c.class==='Fighter'?3:c.class==='Wizzard'?1:2}</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td class="fc-cell" style="color:var(--orange)">3</td>
+          <td><strong style="color:var(--text)">${c.afc3||'—'}</strong>${afc3data?`<br><span style="font-size:11px;color:var(--text-dim)">${afc3data.desc}</span>`:''}</td>
+          <td style="font-size:11px">${afc3data?.mod||'—'}</td>
+          <td style="font-size:11px">${afc3data?.range||'—'}</td>
+          <td style="font-family:var(--font-mono);color:var(--red)">${afc3data?.dmg??'—'}</td>
+          <td style="font-family:var(--font-mono);color:var(--gold2)">${afc3data?.stun??'—'}</td>
+        </tr>
+        <tr>
+          <td class="fc-cell" style="color:var(--orange)">4</td>
+          <td><strong style="color:var(--text)">${c.afc4||'—'}</strong>${afc4data?`<br><span style="font-size:11px;color:var(--text-dim)">${afc4data.desc}</span>`:''}</td>
+          <td style="font-size:11px">${afc4data?.mod||'—'}</td>
+          <td style="font-size:11px">${afc4data?.range||'—'}</td>
+          <td style="font-family:var(--font-mono);color:var(--red)">${afc4data?.dmg??'—'}</td>
+          <td style="font-family:var(--font-mono);color:var(--gold2)">${afc4data?.stun??'—'}</td>
+        </tr>
+        <tr>
+          <td class="fc-cell" style="color:var(--orange)">5</td>
+          <td><strong style="color:var(--text)">${c.afc5||'—'}</strong>${afc5data?`<br><span style="font-size:11px;color:var(--text-dim)">${afc5data.desc}</span>`:''}</td>
+          <td style="font-size:11px">${afc5data?.mod||'—'}</td>
+          <td style="font-size:11px">${afc5data?.range||'—'}</td>
+          <td style="font-family:var(--font-mono);color:var(--red)">${afc5data?.dmg??'—'}</td>
+          <td style="font-family:var(--font-mono);color:var(--gold2)">${afc5data?.stun??'—'}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sheet-separator"><div class="sheet-sep-line"></div><div class="sheet-sep-diamond"></div><div class="sheet-sep-line"></div></div>
+
+    <!-- Trigger row -->
+    <div>
+      <div style="display:grid;grid-template-columns:100px 1fr 90px;margin-bottom:2px">
+        <div class="sheet-trigger-cell header">TRIGGER</div>
+        <div class="sheet-trigger-cell header">IF CONDITION</div>
+        <div class="sheet-trigger-cell header" style="text-align:center">CHARGES</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 1fr 90px;border:1px solid var(--border2)">
+        <div class="sheet-trigger-cell" style="font-weight:600;color:var(--lime)">${c.trigger||'—'}</div>
+        <div class="sheet-trigger-cell" style="font-size:12px">${trigdata?.cond||'—'}</div>
+        <div class="sheet-trigger-cell" style="display:flex;align-items:center;justify-content:center">
+          <div class="charge-pips">
+            ${[0].map(i=>`<div class="charge-pip ${i<(c.triggerCharges||1)?'filled':''}"></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-separator" style="margin-top:12px"><div class="sheet-sep-line"></div><div class="sheet-sep-diamond"></div><div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:3px;padding:0 6px;">EVERYTHING IS UP TO THE DM'S DISCRETION</div><div class="sheet-sep-diamond"></div><div class="sheet-sep-line"></div></div>
+
+    <!-- Known Catalog Section -->
+    <div class="sheet-separator" style="margin-top:12px"><div class="sheet-sep-line"></div><div class="sheet-sep-diamond"></div><div style="font-family:var(--font-mono);font-size:9px;color:var(--gold2);letter-spacing:3px;padding:0 6px;">KNOWN CATALOG</div><div class="sheet-sep-diamond"></div><div class="sheet-sep-line"></div></div>
+
+    <div style="margin-top:10px">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:8px">
+        Abilities you have learned. Equip one per FC slot — swap during 4hrs meditation.
+      </div>
+      ${[3,4,5].map(tier => {
+        const tierAbilities = (CATALOG[c.class]?.['fc'+tier]||[]).filter(ab=>(c.knownCatalog||[]).includes(ab.name));
+        if(!tierAbilities.length) return `<div style="font-family:var(--font-mono);font-size:9px;color:var(--border2);margin-bottom:8px">FC${tier} — no abilities in KC</div>`;
+        return `
+          <div style="margin-bottom:10px">
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--gold2);letter-spacing:2px;margin-bottom:4px;display:flex;align-items:center;gap:6px">
+              <span class="fc-badge">FC ${tier}</span>
+              <span>— equipped: <strong style="color:${c['afc'+tier]?'var(--orange)':'var(--text-dim)'}">${c['afc'+tier]||'none'}</strong></span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              ${tierAbilities.map(ab=>`
+                <div style="display:flex;align-items:center;gap:0;border:1px solid ${c['afc'+tier]===ab.name?'var(--orange)':'var(--border2)'};background:${c['afc'+tier]===ab.name?'rgba(255,107,0,0.08)':'var(--bg3)'}">
+                  <div style="padding:4px 8px;font-size:12px;color:${c['afc'+tier]===ab.name?'var(--text)':'var(--text-mid)'};font-weight:${c['afc'+tier]===ab.name?600:400}" title="${ab.desc}">${ab.name}</div>
+                  ${c['afc'+tier]===ab.name
+                    ? `<button class="btn btn-xs btn-danger" style="border-radius:0;border:none;border-left:1px solid var(--border2)" onclick="sheetUnequip(${tier},'${c.id}')">✕</button>`
+                    : `<button class="btn btn-xs btn-outline" style="border-radius:0;border:none;border-left:1px solid var(--border2)" onclick="sheetEquip(${tier},'${ab.name.replace(/'/g,"\\'")}','${c.id}')">Equip</button>`
+                  }
+                </div>
+              `).join('')}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  </div>
+  `;
+}
+
+function sheetEquip(tier, name, charId) {
+  const c = G.characters.find(x=>x.id===charId);
+  if(!c) return;
+  // Remove from any current slot first
+  if(c.afc3===name) c.afc3=null;
+  if(c.afc4===name) c.afc4=null;
+  if(c.afc5===name) c.afc5=null;
+  if(tier===3) c.afc3=name;
+  if(tier===4) c.afc4=name;
+  if(tier===5) c.afc5=name;
+  saveCharsLocal();
+  renderCharSheet(charId);
+}
+function sheetUnequip(tier, charId) {
+  const c = G.characters.find(x=>x.id===charId);
+  if(!c) return;
+  if(tier===3) c.afc3=null;
+  if(tier===4) c.afc4=null;
+  if(tier===5) c.afc5=null;
+  saveCharsLocal();
+  renderCharSheet(charId);
+}
+
+function findAbilityData(cls, name) {
+  if(!cls||!name) return null;
+  const cat = CATALOG[cls];
+  if(!cat) return null;
+  for(const tier of ['fc3','fc4','fc5']) {
+    const f = cat[tier]?.find(a=>a.name===name);
+    if(f) return f;
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════
+//  CHARACTER BUILDER
+// ══════════════════════════════════════════════
+function startNewChar() {
+  G.builder = { step:0, char:makeNewChar() };
+  G.builder.char.id = 'c'+Date.now();
+  navigate('builder'); gotoStep(0);
+}
+
+const STEPS = [stepIdentity,stepClass,stepSkills,stepKC,stepTrigger,stepPerks,stepSummary];
+
+function gotoStep(n) {
+  G.builder.step = n;
+  document.querySelectorAll('.builder-step-item').forEach((el,i)=>{
+    el.classList.toggle('active',i===n);
+  });
+  const bc = document.getElementById('builder-content');
+  bc.innerHTML='';
+  STEPS[n](bc);
+  const c = G.builder.char;
+  document.getElementById('builder-name-display').textContent = c.name?`// ${c.name}`:'';
+}
+
+function stepIdentity(el) {
+  const c = G.builder.char;
+  el.innerHTML=`
+    <div class="section-header"><div class="section-title">IDENTITY</div><div class="section-line"></div></div>
+    <div class="grid-2">
+      <div>
+        <div class="form-group"><label class="form-label">Character Name</label><input type="text" id="b-name" value="${c.name}" placeholder="Enter name..."></div>
+        <div class="form-group"><label class="form-label">Backstory</label><textarea id="b-backstory" placeholder="Character backstory...">${c.backstory}</textarea></div>
+        <div class="form-group"><label class="form-label">Feature 1</label><input type="text" id="b-feat1" value="${c.features[0]}" placeholder='e.g. "Hopeful"'></div>
+        <div class="form-group"><label class="form-label">Feature 2</label><input type="text" id="b-feat2" value="${c.features[1]}" placeholder='e.g. "Reckless"'></div>
+        <div class="form-group"><label class="form-label">Passive Ability (if any)</label><input type="text" id="b-passive" value="${c.passive||''}" placeholder="Leave blank if none..."></div>
+      </div>
+      <div>
+        <div class="card mb-12">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:8px">ABOUT FEATURES</div>
+          <p class="text-mid text-sm" style="line-height:1.7">Features are words/phrases describing your character. Use once per engagement for +X to dice pool or result. Evolve through play.</p>
+        </div>
+        <div class="card">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:8px">BASE STATS</div>
+          <div class="form-group"><label class="form-label">Max HP (default 35)</label><input type="number" id="b-hp" value="${c.maxHp}" min="1" max="99"></div>
+          <div class="form-group"><label class="form-label">AC (default 5+Body)</label><input type="number" id="b-ac" value="${c.ac}" min="1" max="30"></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-primary" onclick="saveStepId()">Next: Class →</button>
+    </div>
+  `;
+}
+function saveStepId(){
+  const c=G.builder.char;
+  c.name=document.getElementById('b-name').value.trim();
+  c.backstory=document.getElementById('b-backstory').value;
+  c.features=[document.getElementById('b-feat1').value,document.getElementById('b-feat2').value];
+  c.passive=document.getElementById('b-passive').value;
+  c.maxHp=parseInt(document.getElementById('b-hp').value)||35;
+  c.hp=c.maxHp;
+  c.ac=parseInt(document.getElementById('b-ac').value)||5;
+  gotoStep(1);
+}
+
+function stepClass(el){
+  const c=G.builder.char;
+  el.innerHTML=`
+    <div class="section-header"><div class="section-title">CHOOSE CLASS</div><div class="section-line"></div></div>
+    <div class="class-selector mb-16">
+      ${Object.entries(CLASSES).map(([cls,info])=>`
+        <div class="class-option ${c.class===cls?'selected':''}" onclick="selClass('${cls}')">
+          <div class="class-option-name class-${cls}">${cls.toUpperCase()}</div>
+          <div class="class-option-role">${info.role}</div>
+          <div class="class-option-desc">${info.desc}</div>
+          <div class="class-option-bonus text-mono" style="color:${info.color};margin-top:8px;font-size:11px">✦ ${info.bonus}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <button class="btn btn-outline" onclick="gotoStep(0)">← Back</button>
+      <button class="btn btn-primary" onclick="gotoStep(2)">Next: Skills →</button>
+    </div>
+  `;
+}
+function selClass(cls){G.builder.char.class=cls;stepClass(document.getElementById('builder-content'));}
+
+function stepSkills(el){
+  const c=G.builder.char;
+  const PILLARS=[
+    {key:'Body',skills:[{k:'PoB',n:'Power of Body'},{k:'RoB',n:'Resolve of Body'},{k:'FoB',n:'Focus of Body'}]},
+    {key:'Mind',skills:[{k:'PoM',n:'Power of Mind'},{k:'RoM',n:'Resolve of Mind'},{k:'FoM',n:'Focus of Mind'}]},
+    {key:'Spirit',skills:[{k:'PoS',n:'Power of Spirit'},{k:'RoS',n:'Resolve of Spirit'},{k:'FoS',n:'Focus of Spirit'}]},
+  ];
+  const used=Object.values(c.skills).reduce((a,b)=>a+b,0);
+  el.innerHTML=`
+    <div class="section-header"><div class="section-title">DICE & SKILLS</div><div class="section-line"></div><div class="section-tag">4 POINTS MAX (2 PER SKILL)</div></div>
+    <div class="card mb-14" style="display:flex;gap:16px;align-items:center">
+      <div><div class="form-label">Assign dice to pillars</div><div class="text-sm text-dim">D6 = baseline | D8 = trained | D10 = exceptional</div></div>
+      <div class="text-mono" style="color:var(--gold2);font-size:15px;white-space:nowrap">Points left: <strong id="pts-left">${4-used}</strong></div>
+    </div>
+    <div class="dice-allocator">
+      ${PILLARS.map(p=>`
+        <div class="dice-row">
+          <div class="dice-label class-${p.key}">${p.key}</div>
+          <div class="dice-desc">${p.skills.map(s=>`<div style="font-size:11px;color:var(--text-dim)">${s.n}</div>`).join('')}</div>
+          <select style="width:90px" id="dice-${p.key}" onchange="updDice('${p.key}',this.value)">
+            ${['D6','D8','D10'].map(d=>`<option ${c.dice[p.key]===d?'selected':''}>${d}</option>`).join('')}
+          </select>
+        </div>
+      `).join('')}
+    </div>
+    <div class="skills-grid mt-12" style="margin-top:12px">
+      ${PILLARS.map(p=>`
+        <div class="pillar-block">
+          <div class="pillar-title class-${p.key}">${p.key}</div>
+          <div class="pillar-die">${c.dice[p.key]}</div>
+          ${p.skills.map(s=>`
+            <div class="skill-row">
+              <div class="skill-name">${s.n}</div>
+              <div class="skill-pips">
+                ${[1,2].map(pip=>`<div class="skill-pip ${c.skills[s.k]>=pip?'filled':''}" onclick="togPip('${s.k}',${pip})"></div>`).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:14px">
+      <button class="btn btn-outline" onclick="gotoStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="gotoStep(3)">Next: AFC →</button>
+    </div>
+  `;
+}
+function updDice(p,d){G.builder.char.dice[p]=d;stepSkills(document.getElementById('builder-content'));}
+function togPip(k,pip){
+  const c=G.builder.char;
+  const used=Object.values(c.skills).reduce((a,b)=>a+b,0);
+  if(c.skills[k]>=pip) c.skills[k]=pip-1;
+  else { if(used>=4){toast('No skill points left!','warn');return;} c.skills[k]=pip; }
+  stepSkills(document.getElementById('builder-content'));
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  STEP 4: Known Catalog — the single source of truth for abilities.
+//
+//  RULE: An ability must be in the KC before it can be equipped in an
+//  AFC slot. This applies to character creation AND level-up equally.
+//
+//  UI layout:
+//    Top bar   — shows current AFC slot loadout (FC3/4/5)
+//    Per tier  — list of all class abilities for that FC tier
+//                Each row has two possible actions:
+//                  NOT in KC → [+ Add to KC]
+//                  In KC, not equipped → [Equip FC3] + [Remove from KC]
+//                  In KC, equipped → [✓ Equipped · FC3] + [Unequip]
+// ══════════════════════════════════════════════════════════════════════
+function stepKC(el) {
+  const c = G.builder.char;
+  if (!c.knownCatalog) c.knownCatalog = [];
+  const cat = CATALOG[c.class] || {fc3:[],fc4:[],fc5:[]};
+  const kc = c.knownCatalog;
+  const kcCount = kc.length;
+  const slotsFilledCount = [c.afc3,c.afc4,c.afc5].filter(Boolean).length;
+
+  // Slot summary strip
+  const slotChip = (fc, sel) => {
+    const color = sel ? 'var(--orange)' : 'var(--border2)';
+    const textColor = sel ? 'var(--text)' : 'var(--text-dim)';
+    return `
+      <div style="flex:1;border:1px solid ${color};background:${sel?'rgba(255,107,0,0.08)':'var(--bg3)'};padding:7px 10px;display:flex;align-items:center;gap:6px">
+        <span class="fc-badge" style="opacity:${sel?1:0.4}">FC${fc}</span>
+        <span style="font-size:12px;color:${textColor};flex:1;font-family:var(--font-ui)">${sel || '— empty —'}</span>
+        ${sel ? `<button class="btn btn-xs btn-danger" onclick="kcUnequipSlot(${fc})">✕</button>` : ''}
+      </div>`;
+  };
+
+  // One row per ability
+  const abilityRow = (ab, tier) => {
+    const inKC = kc.includes(ab.name);
+    const equippedAt = c.afc3===ab.name ? 3 : c.afc4===ab.name ? 4 : c.afc5===ab.name ? 5 : null;
+
+    let actions = '';
+    if (!inKC) {
+      // Step 1 available: add to KC
+      actions = `<button class="btn btn-xs btn-gold" onclick="kcAdd('${ab.name.replace(/'/g,"\\'")}')">+ Add to KC</button>`;
+    } else if (equippedAt) {
+      // Already equipped — show which slot, allow unequip
+      actions = `
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--orange);border:1px solid var(--orange);padding:2px 6px">✓ Slot FC${equippedAt}</span>
+        <button class="btn btn-xs btn-outline" onclick="kcUnequipSlot(${equippedAt})">Unequip</button>
+        <button class="btn btn-xs btn-danger" onclick="kcRemove('${ab.name.replace(/'/g,"\\'")}')">Remove KC</button>`;
+    } else {
+      // In KC but not equipped — allow equip to the matching tier slot
+      const slotTaken = tier===3?!!c.afc3 : tier===4?!!c.afc4 : !!c.afc5;
+      actions = `
+        <button class="btn btn-xs btn-primary" onclick="kcEquip(${tier},'${ab.name.replace(/'/g,"\\'")}')">
+          ${slotTaken ? `⟳ Swap FC${tier}` : `Equip FC${tier}`}
+        </button>
+        <button class="btn btn-xs btn-danger" onclick="kcRemove('${ab.name.replace(/'/g,"\\'")}')">Remove KC</button>`;
+    }
+
+    const borderColor = equippedAt ? 'var(--orange)' : inKC ? 'var(--border2)' : 'var(--border)';
+    const bg = equippedAt ? 'rgba(255,107,0,0.06)' : inKC ? 'rgba(255,107,0,0.02)' : 'var(--bg3)';
+
+    return `
+      <div style="background:${bg};border:1px solid ${borderColor};padding:8px 11px;margin-bottom:4px;display:flex;align-items:center;gap:9px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;color:${inKC?'var(--text)':'var(--text-dim)'}">${ab.name}</div>
+          <div style="font-size:10px;color:var(--text-dim);margin-top:1px">${ab.desc}</div>
+        </div>
+        <div style="text-align:center;font-family:var(--font-mono);font-size:9px;min-width:28px;flex-shrink:0">
+          <span style="display:block;font-size:12px;color:var(--red)">${ab.dmg}</span>DMG</div>
+        <div style="text-align:center;font-family:var(--font-mono);font-size:9px;min-width:28px;flex-shrink:0">
+          <span style="display:block;font-size:12px;color:var(--gold2)">${ab.stun}</span>STUN</div>
+        <div style="font-size:10px;color:var(--text-dim);min-width:60px;text-align:center;flex-shrink:0">${ab.range}</div>
+        <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">${actions}</div>
+      </div>`;
+  };
+
+  el.innerHTML = `
+    <div class="section-header">
+      <div class="section-title">KNOWN CATALOG</div>
+      <div class="section-line"></div>
+      <div class="section-tag">${kcCount} IN KC · ${slotsFilledCount}/3 EQUIPPED</div>
+    </div>
+
+    <div class="card mb-12">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--gold2);letter-spacing:2px;margin-bottom:5px">HOW THIS WORKS</div>
+      <p class="text-mid text-sm" style="line-height:1.7">
+        <strong style="color:var(--text)">Step 1 — Add to KC:</strong> Click <span style="color:var(--gold)">+ Add to KC</span> on any ability. This adds it permanently to your Known Catalog — the book your character physically possesses.<br>
+        <strong style="color:var(--text)">Step 2 — Equip to slot:</strong> Once in your KC, click <span style="color:var(--orange)">Equip FC3/4/5</span> to load it into a combat slot. You have one slot per tier. You can re-equip via meditation later.
+      </p>
+      <p class="text-mid text-xs" style="margin-top:5px;color:var(--text-dim)">Leveling up also adds to your KC — AFC slots are always chosen from what's in your KC, never directly.</p>
+    </div>
+
+    <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-dim);letter-spacing:2px;margin-bottom:5px">CURRENT AFC LOADOUT</div>
+    <div style="display:flex;gap:5px;margin-bottom:16px">
+      ${slotChip(3,c.afc3)}${slotChip(4,c.afc4)}${slotChip(5,c.afc5)}
+    </div>
+
+    <div class="afc-section">
+      <div class="afc-label"><span class="fc-badge">FC 3</span> FC3 Abilities</div>
+      ${cat.fc3.map(ab=>abilityRow(ab,3)).join('')}
+    </div>
+    <div class="afc-section">
+      <div class="afc-label"><span class="fc-badge">FC 4</span> FC4 Abilities</div>
+      ${cat.fc4.map(ab=>abilityRow(ab,4)).join('')}
+    </div>
+    <div class="afc-section">
+      <div class="afc-label"><span class="fc-badge">FC 5</span> FC5 Abilities</div>
+      ${cat.fc5.map(ab=>abilityRow(ab,5)).join('')}
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:14px">
+      <button class="btn btn-outline" onclick="gotoStep(2)">← Back</button>
+      <button class="btn btn-primary" onclick="gotoStep(4)">Next: Trigger →</button>
+    </div>`;
+}
+
+// Add ability to KC (never directly equips — that's a second explicit action)
+function kcAdd(name) {
+  const c = G.builder.char;
+  if (!c.knownCatalog) c.knownCatalog = [];
+  if (!c.knownCatalog.includes(name)) c.knownCatalog.push(name);
+  stepKC(document.getElementById('builder-content'));
+}
+
+// Remove from KC — also clears any equipped slot
+function kcRemove(name) {
+  const c = G.builder.char;
+  if (!c.knownCatalog) c.knownCatalog = [];
+  c.knownCatalog = c.knownCatalog.filter(n => n !== name);
+  if (c.afc3 === name) c.afc3 = null;
+  if (c.afc4 === name) c.afc4 = null;
+  if (c.afc5 === name) c.afc5 = null;
+  stepKC(document.getElementById('builder-content'));
+}
+
+// Equip an ability from KC into the correct FC slot
+// Ability MUST already be in KC (enforced by UI — button only shows when inKC)
+function kcEquip(fc, name) {
+  const c = G.builder.char;
+  if (!c.knownCatalog || !c.knownCatalog.includes(name)) {
+    toast('Add ability to KC first!', 'warn'); return;
+  }
+  // Remove from whichever slot it's currently in
+  if (c.afc3 === name) c.afc3 = null;
+  if (c.afc4 === name) c.afc4 = null;
+  if (c.afc5 === name) c.afc5 = null;
+  // Assign to the correct slot
+  if (fc === 3) c.afc3 = name;
+  if (fc === 4) c.afc4 = name;
+  if (fc === 5) c.afc5 = name;
+  stepKC(document.getElementById('builder-content'));
+}
+
+// Clear a slot without removing from KC
+function kcUnequipSlot(fc) {
+  const c = G.builder.char;
+  if (fc === 3) c.afc3 = null;
+  if (fc === 4) c.afc4 = null;
+  if (fc === 5) c.afc5 = null;
+  stepKC(document.getElementById('builder-content'));
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  LEVEL UP MODAL
+//  Odd levels  → add 2 abilities to KC
+//  Even levels → add 1 ability to KC + enhance 2 AFC (DM coordination)
+//  After confirming KC additions, offer to swap AFC slots from KC.
+// ══════════════════════════════════════════════════════════════════════
+function levelUpModal(id) {
+  const c = G.characters.find(x=>x.id===id);
+  if (!c) return;
+  if (!c.knownCatalog) c.knownCatalog = [];
+  const newLevel = (c.level||1) + 1;
+  const isOdd = newLevel % 2 !== 0;
+  const maxPick = isOdd ? 2 : 1;
+  const cat = CATALOG[c.class] || {fc3:[],fc4:[],fc5:[]};
+  const allAbilities = [...cat.fc3,...cat.fc4,...cat.fc5];
+  const notInKC = allAbilities.filter(ab => !c.knownCatalog.includes(ab.name));
+  window._lvlSel = [];
+  document._lvlCharId = id;
+
+  const renderPhase1 = () => {
+    const opts = notInKC.map(ab => {
+      const tier = cat.fc3.find(x=>x.name===ab.name)?3 : cat.fc4.find(x=>x.name===ab.name)?4 : 5;
+      const selId = 'lv-opt-'+ab.name.replace(/\W/g,'_');
+      return `
+        <div id="${selId}" style="background:var(--bg3);border:1px solid var(--border);padding:7px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:border-color 0.15s"
+             onclick="lvlToggle('${ab.name.replace(/'/g,"\\'")}',${maxPick})">
+          <div style="flex:1">
+            <span style="font-weight:600">${ab.name}</span>
+            <span class="fc-badge" style="margin-left:5px">FC${tier}</span>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:1px">${ab.desc}</div>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:9px;text-align:center;min-width:28px">
+            <span style="color:var(--red);display:block;font-size:12px">${ab.dmg}</span>DMG</div>
+          <div style="font-family:var(--font-mono);font-size:9px;text-align:center;min-width:28px">
+            <span style="color:var(--gold2);display:block;font-size:12px">${ab.stun}</span>STUN</div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="callout" style="margin-bottom:12px">
+        <strong>${isOdd ? `Level ${newLevel} (Odd)` : `Level ${newLevel} (Even)`}:</strong>
+        Add <strong>${maxPick}</strong> new abilit${maxPick>1?'ies':'y'} to your Known Catalog.
+        ${!isOdd ? ' You also get to enhance 2 equipped AFC abilities — coordinate that with your DM.' : ''}
+        <br><span style="font-size:10px;color:var(--text-dim)">KC additions are permanent. AFC slot loadout can be swapped afterward.</span>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:7px">
+        CHOOSE ${maxPick} TO ADD TO KC — ${notInKC.length} abilities available
+      </div>
+      ${notInKC.length ? opts : '<p style="color:var(--text-dim);font-size:12px">All class abilities are already in your KC!</p>'}
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--gold2);margin-top:8px" id="lv-count">
+        Selected: 0 / ${maxPick}
+      </div>
+      ${!isOdd ? `
+        <div class="card" style="margin-top:12px;border-color:var(--gold)">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--gold2);margin-bottom:4px">AFC ENHANCEMENT (DM)</div>
+          <p class="text-mid text-sm">Work with your DM to upgrade 2 equipped abilities — increased damage, stun, range, or new effects.</p>
+          <div style="margin-top:6px;font-size:11px;color:var(--text-mid)">
+            ${[c.afc3,c.afc4,c.afc5].filter(Boolean).map((n,i)=>`<span class="fc-badge" style="margin-right:4px">FC${i+3}: ${n}</span>`).join('') || '— no AFC equipped —'}
+          </div>
+        </div>` : ''}`;
+  };
+
+  const renderPhase2 = (added) => {
+    // After KC update: offer to swap AFC loadout from the now-updated KC
+    const kc = c.knownCatalog;
+    const slotRow = (fc, sel) => {
+      const available = (cat[`fc${fc}`]||[]).filter(ab=>kc.includes(ab.name));
+      return `
+        <div style="margin-bottom:10px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--gold2);margin-bottom:5px;display:flex;align-items:center;gap:6px">
+            <span class="fc-badge">FC${fc}</span> SLOT — currently: <strong style="color:${sel?'var(--orange)':'var(--text-dim)'}">${sel||'empty'}</strong>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${available.map(ab=>`
+              <button class="btn btn-sm ${sel===ab.name?'btn-primary':'btn-outline'}" onclick="lvlSwapAFC(${fc},'${ab.name.replace(/'/g,"\\'")}')">
+                ${sel===ab.name?'✓ ':''} ${ab.name}
+              </button>`).join('')}
+            ${!available.length ? `<span style="color:var(--text-dim);font-size:11px;font-family:var(--font-mono)">No FC${fc} in KC</span>` : ''}
+          </div>
+        </div>`;
+    };
+    return `
+      <div class="callout" style="margin-bottom:12px;border-color:var(--lime)">
+        <strong style="color:var(--lime)">KC updated!</strong> Added: ${added.map(n=>`<span class="fc-badge" style="margin-left:3px">${n}</span>`).join('')}
+        <br><span style="font-size:10px;color:var(--text-dim)">Optionally swap your AFC loadout now — or leave it and do it during meditation.</span>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);margin-bottom:10px">EQUIP FROM KNOWN CATALOG (optional)</div>
+      ${slotRow(3,c.afc3)}
+      ${slotRow(4,c.afc4)}
+      ${slotRow(5,c.afc5)}`;
+  };
+
+  openModal(`Level Up → Level ${newLevel}`, renderPhase1(), [
+    {label:`Add to KC`, cls:'btn-primary', fn:() => {
+      const needed = Math.min(maxPick, notInKC.length);
+      if (window._lvlSel.length < needed) {
+        toast(`Select ${needed} abilit${needed>1?'ies':'y'} to add to KC!`, 'warn'); return;
+      }
+      // Add to KC permanently
+      window._lvlSel.forEach(name => {
+        if (!c.knownCatalog.includes(name)) c.knownCatalog.push(name);
+      });
+      c.level = newLevel;
+      saveCharsLocal();
+      const added = [...window._lvlSel];
+      window._lvlSel = [];
+      // Show phase 2: offer AFC swap
+      document.getElementById('modal-body').innerHTML = renderPhase2(added);
+      document.getElementById('modal-footer').innerHTML = '';
+      const footer = document.getElementById('modal-footer');
+      const doneBtn = document.createElement('button');
+      doneBtn.className = 'btn btn-lime';
+      doneBtn.textContent = `✓ Done — Level ${newLevel}`;
+      doneBtn.onclick = () => {
+        saveCharsLocal();
+        closeModal();
+        toast(`${c.name} is now Level ${newLevel}!`, 'success');
+        renderCharacters();
+      };
+      footer.appendChild(doneBtn);
+    }},
+    {label:'Cancel', cls:'btn-outline', fn:()=>{window._lvlSel=[];closeModal();}}
+  ]);
+}
+
+// Toggle selection in level-up phase 1
+function lvlToggle(name, max) {
+  const idx = window._lvlSel.indexOf(name);
+  const el = document.getElementById('lv-opt-'+name.replace(/\W/g,'_'));
+  if (idx >= 0) {
+    window._lvlSel.splice(idx, 1);
+    if (el) el.style.borderColor = 'var(--border)';
+  } else {
+    if (window._lvlSel.length >= max) { toast(`Max ${max} selection${max>1?'s':''}!`,'warn'); return; }
+    window._lvlSel.push(name);
+    if (el) el.style.borderColor = 'var(--lime)';
+  }
+  const cnt = document.getElementById('lv-count');
+  if (cnt) cnt.textContent = `Selected: ${window._lvlSel.length} / ${max}`;
+}
+
+function lvlSwapAFC(fc, name) {
+  const ch = G.characters.find(x=>x.id===document._lvlCharId);
+  if (!ch) return;
+  if (ch.afc3===name) ch.afc3=null;
+  if (ch.afc4===name) ch.afc4=null;
+  if (ch.afc5===name) ch.afc5=null;
+  if (fc===3) ch.afc3=name;
+  if (fc===4) ch.afc4=name;
+  if (fc===5) ch.afc5=name;
+  saveCharsLocal();
+  const cat = CATALOG[ch.class]||{fc3:[],fc4:[],fc5:[]};
+  const kc = ch.knownCatalog||[];
+  const slotRow = (fc2, sel) => {
+    const available = (cat[`fc${fc2}`]||[]).filter(ab=>kc.includes(ab.name));
+    return `<div class="lvl-slot-row" style="margin-bottom:10px">
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--gold2);margin-bottom:5px;display:flex;align-items:center;gap:6px">
+        <span class="fc-badge">FC${fc2}</span> SLOT — <strong style="color:${sel?'var(--orange)':'var(--text-dim)'}">${sel||'empty'}</strong>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${available.map(ab=>`<button class="btn btn-sm ${sel===ab.name?'btn-primary':'btn-outline'}" onclick="lvlSwapAFC(${fc2},'${ab.name.replace(/'/g,"\\'")}')">
+          ${sel===ab.name?'✓ ':''} ${ab.name}</button>`).join('')}
+        ${!available.length?`<span style="color:var(--text-dim);font-size:11px;font-family:var(--font-mono)">No FC${fc2} in KC</span>`:''}
+      </div></div>`;
+  };
+  // Replace slot rows in modal body
+  document.querySelectorAll('.lvl-slot-row').forEach(r=>r.remove());
+  document.getElementById('modal-body').insertAdjacentHTML('beforeend',
+    slotRow(3,ch.afc3)+slotRow(4,ch.afc4)+slotRow(5,ch.afc5));
+}
+
+function toggleLvlSel(name, max) {
+  const idx = window._lvlSel.indexOf(name);
+  const el = document.getElementById('lv-opt-'+name.replace(/\s/g,'_'));
+  if(idx>=0) {
+    window._lvlSel.splice(idx,1);
+    if(el) el.style.borderColor='var(--border)';
+  } else {
+    if(window._lvlSel.length >= max) { toast(`Max ${max} selection${max>1?'s':''}!`,'warn'); return; }
+    window._lvlSel.push(name);
+    if(el) el.style.borderColor='var(--lime)';
+  }
+  const cnt = document.getElementById('lv-count');
+  if(cnt) cnt.textContent = `Selected: ${window._lvlSel.length} / ${max}`;
+}
+
+
+function stepTrigger(el){
+  const c=G.builder.char;
+  const triggers=CATALOG[c.class]?.triggers||[];
+  el.innerHTML=`
+    <div class="section-header"><div class="section-title">TRIGGER</div><div class="section-line"></div></div>
+    <div class="card mb-14"><div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:6px">ABOUT TRIGGERS</div><p class="text-mid text-sm" style="line-height:1.7">IF condition is met → use ability up to remaining charges. 1 charge per encounter, refreshed at encounter end.</p></div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px">
+      ${triggers.map(t=>`
+        <div class="afc-option ${c.trigger===t.name?'selected':''}" onclick="selTrigger('${t.name.replace(/'/g,"\\'")}')">
+          <div><div class="afc-option-name">${t.name}</div><div class="afc-option-desc">IF: ${t.cond}</div></div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <button class="btn btn-outline" onclick="gotoStep(3)">← Back</button>
+      <button class="btn btn-primary" onclick="gotoStep(5)">Next: Perks →</button>
+    </div>
+  `;
+}
+function selTrigger(n){G.builder.char.trigger=n;stepTrigger(document.getElementById('builder-content'));}
+
+function stepPerks(el){
+  const c=G.builder.char;
+  el.innerHTML=`
+    <div class="section-header"><div class="section-title">PERKS & FEATURES</div><div class="section-line"></div></div>
+    <div class="card mb-14"><div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:6px">SELECT 2 PERKS</div><p class="text-mid text-sm" style="line-height:1.7">Perks grant specific bonuses. Work with your DM for custom perks.</p></div>
+    <div class="perk-grid mb-14">
+      ${PERKS.map(p=>`
+        <div class="perk-option ${c.perks.includes(p.name)?'selected':''}" onclick="togPerk('${p.name}')">
+          <div class="perk-option-name">${p.name}</div>
+          <div class="perk-option-desc">${p.desc}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <button class="btn btn-outline" onclick="gotoStep(4)">← Back</button>
+      <button class="btn btn-primary" onclick="gotoStep(6)">Next: Summary →</button>
+    </div>
+  `;
+}
+function togPerk(name){
+  const c=G.builder.char;
+  if(c.perks.includes(name)) c.perks=c.perks.filter(p=>p!==name);
+  else { if(c.perks.length>=2){toast('Max 2 perks!','warn');return;} c.perks.push(name); }
+  stepPerks(document.getElementById('builder-content'));
+}
+
+function stepSummary(el){
+  const c=G.builder.char;
+  const cls=CLASSES[c.class];
+  el.innerHTML=`
+    <div class="section-header"><div class="section-title">SUMMARY</div><div class="section-line"></div></div>
+    <div class="grid-2">
+      <div>
+        <div class="card mb-12">
+          <div style="font-family:var(--font-d);font-size:30px;letter-spacing:3px;color:${cls.color}">${c.name||'Unnamed'}</div>
+          <span class="class-tag class-${c.class}" style="margin-top:4px;display:inline-block">${c.class}</span>
+          ${c.backstory?`<p class="text-mid text-sm" style="margin-top:10px;line-height:1.6">${c.backstory}</p>`:''}
+        </div>
+        <div class="card mb-12">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:8px">BASE STATS</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${[['HP',c.maxHp],['AC',c.ac],['BODY',c.dice?.Body],['MIND',c.dice?.Mind],['SPIRIT',c.dice?.Spirit]].map(([l,v])=>`
+              <div style="background:var(--bg3);border:1px solid var(--border);padding:6px 10px;text-align:center;min-width:55px">
+                <div style="font-family:var(--font-d);font-size:20px;color:var(--orange)">${v}</div>
+                <div style="font-size:9px;color:var(--text-dim);font-family:var(--font-mono)">${l}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:8px">ABILITIES</div>
+          ${['afc3','afc4','afc5'].map((k,i)=>c[k]?`
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+              <span class="fc-badge">FC${i+3}</span><span style="font-size:13px">${c[k]}</span>
+            </div>
+          `:'').join('')}
+          ${c.trigger?`<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span class="tag" style="border-color:var(--lime);color:var(--lime)">TRIGGER</span><span style="font-size:13px">${c.trigger}</span></div>`:''}
+        </div>
+        <div class="card mb-12" style="margin-top:12px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:7px">KNOWN CATALOG (${(c.knownCatalog||[]).length})</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${(c.knownCatalog||[]).map(n=>`<span class="tag">${n}</span>`).join('') || '<span class="text-dim text-sm">Empty</span>'}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card mb-12">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:8px">FEATURES</div>
+          ${c.features.filter(Boolean).map(f=>`<div class="tag mb-8" style="margin-right:5px;margin-bottom:5px">${f}</div>`).join('')||'<span class="text-dim text-sm">None set</span>'}
+        </div>
+        <div class="card mb-12">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:8px">PERKS</div>
+          ${c.perks.length?c.perks.map(p=>`<div class="text-sm mb-8"><strong>${p}</strong>: <span class="text-dim">${PERKS.find(x=>x.name===p)?.desc}</span></div>`).join(''):'<span class="text-dim text-sm">None</span>'}
+        </div>
+        <div class="card">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;margin-bottom:6px">CLASS BONUS</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:${cls.color}">✦ ${cls.bonus}</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:16px">
+      <button class="btn btn-outline" onclick="gotoStep(5)">← Back</button>
+      <button class="btn btn-primary" style="padding:11px 30px" onclick="saveChar()">✓ Save Character</button>
+    </div>
+  `;
+}
+
+function saveChar(){
+  const c=G.builder.char;
+  if(!c.name.trim()){toast('Enter a name!','error');return;}
+  const idx=G.characters.findIndex(x=>x.id===c.id);
+  if(idx>=0) G.characters[idx]={...c};
+  else G.characters.push({...c});
+  saveCharsLocal();
+  toast(`${c.name} saved!`,'success');
+  navigate('characters');
+}
+
+// ══════════════════════════════════════════════
+//  RULES
+// ══════════════════════════════════════════════
+const TOC=[
+  {id:'intro',t:'TICK',h:1},{id:'preface',t:'Preface',h:2},{id:'dict',t:'Dictionary',h:2},
+  {id:'tick-terms',t:'TICK Terminology',h:3},{id:'combat-terms',t:'Combat Terminology',h:3},{id:'basic-terms',t:'TTRPG Basics',h:3},
+  {id:'creation',t:'CHARACTER CREATION',h:1},{id:'classes',t:'Classes',h:2},{id:'perks-f',t:'Perks & Features',h:2},
+  {id:'skills',t:'SKILLS',h:1},{id:'dice-alloc',t:'Dice Allocation',h:2},{id:'skill-pool',t:'Skill Pool',h:2},
+  {id:'system',t:'GAME SYSTEM',h:1},{id:'rolls',t:'How Rolls Work',h:2},{id:'thresh',t:'Success Thresholds',h:2},{id:'crits',t:'Criticals & Chaining',h:2},{id:'leveling',t:'Leveling Up',h:2},
+  {id:'combat',t:'COMBAT',h:1},{id:'overview',t:'Overview',h:2},{id:'conditions',t:'Starting Conditions',h:2},{id:'grapple',t:'Grapple Rules',h:2},{id:'weapons',t:'Weapons',h:2},{id:'stress-r',t:'Stress & Exhaustion',h:2},{id:'stun-r',t:'Stun',h:2},{id:'rest',t:'Rest Chart',h:2},
+  {id:'catalogs',t:'ABILITY CATALOGS',h:1},
+  {id:'cat-fighter',t:'Fighter',h:2},{id:'cat-wizzard',t:'Wizzard',h:2},
+  {id:'cat-savant',t:'Savant',h:2},{id:'cat-healer',t:'Healer',h:2},
+];
+
+function renderRules(){
+  const toc=document.getElementById('rules-toc');
+  toc.innerHTML=TOC.map(s=>`<div class="toc-item ${s.h===1?'toc-h1':''}" onclick="scrollTo2('${s.id}')">${s.t}</div>`).join('');
+  document.getElementById('rules-content').innerHTML=buildRulesHTML();
+}
+function scrollTo2(id){const e=document.getElementById(id);if(e)e.scrollIntoView({behavior:'smooth',block:'start'})}
+
+function buildRulesHTML(){return`
+<h1 id="intro">TICK</h1>
+<p style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:3px">INSERT NOISE HERE // v0.1 // Dylan Bolt & Cailyn Eveland</p>
+<h2 id="preface">Preface</h2>
+<p>TICK improves on DnD's worst aspect: combat. Through YOMI Hustle-inspired non-initiative combat, a frame-based cost system lets every player act simultaneously and build on each other's abilities.</p>
+<div class="callout">Each player has <strong>5 abilities</strong>: 2 universal base abilities (FC1 Move, FC2 Punch) and 3 Advanced Frame Cost (AFC) abilities from their Known Catalog.</div>
+<h2 id="dict">Dictionary</h2>
+<h3 id="tick-terms">TICK Terminology</h3>
+<ul>
+  <li><strong>Frame Cost (FC):</strong> Static number of action frames an ability requires to complete.</li>
+  <li><strong>Advance Frame Costs (AFCs):</strong> Frame costs 3, 4, 5 — chosen from your Known Catalog.</li>
+  <li><strong>Known Catalog (KC):</strong> Abilities your character can access. Physically represented by a book. New abilities appear periodically.</li>
+  <li><strong>Trigger Abilities:</strong> IF-condition abilities. 1 charge per encounter, refreshed at end.</li>
+  <li><strong>Dice Chaining:</strong> On a critical with a skill die, roll the next die size up with advantage and take that result.</li>
+  <li><strong>Momentum:</strong> Gained when you fail any roll. Spend to increase a result by +1 (after roll, before success check).</li>
+  <li><strong>Books:</strong> World objects representing KC fragments — contain AFCs, Triggers, Passives, or Perks.</li>
+  <li><strong>Features:</strong> Words/phrases describing your character. Used once per engagement for +X to dice pool or result. Level up on success, down on failure (min 1).</li>
+</ul>
+<h3 id="combat-terms">Combat Terminology</h3>
+<ul>
+  <li><strong>Action Track:</strong> A set of 8 frames.</li>
+  <li><strong>Active Frame:</strong> Frame on which an ability resolves. New ability chosen after.</li>
+  <li><strong>Resolving:</strong> (1) Choose targets → (2) Roll attack / saving throws → (3) Apply damage and stun → (4) Apply additional effects.</li>
+  <li><strong>Punch:</strong> Any quick unarmed action. Deals 2 dmg at level 1. Uses Dex or Str.</li>
+  <li><strong>Storing Frames:</strong> At end of track, store up to 2 remaining frames. Max 2 stored.</li>
+  <li><strong>Stress:</strong> Exert to Dash or lower FC by 1 per stress. Max 1 per move. 5 stress = Exhaustion (disadvantage on all rolls).</li>
+  <li><strong>Stun:</strong> Static number on abilities. Target loses X frames from end of current track. Excess carries over. Target always finishes initiated ability first.</li>
+</ul>
+<h3 id="basic-terms">TTRPG Basics</h3>
+<ul>
+  <li><strong>AC:</strong> Armor Class — how hard it is to hit you. Base 5 + Body.</li>
+  <li><strong>HP:</strong> Hit Points — base 35. Does not increase with level.</li>
+  <li><strong>Down:</strong> HP ≤ 0. All stun and frame advantage cleared.</li>
+  <li><strong>Short Rest:</strong> 4hr sleep or 6hr daily life → recover up to 17 HP.</li>
+  <li><strong>Long Rest:</strong> 8hr sleep → restore HP to 35.</li>
+</ul>
+<h1 id="creation">CHARACTER CREATION</h1>
+<ol>
+  <li>Choose Name & Backstory</li><li>Choose Class</li><li>Assign Dice (D6/D8/D10) to Pillars</li>
+  <li>Choose 2 Perks & 2 Features</li><li>Set HP to 35, AC to 5+Body</li>
+  <li>Select AFC abilities (FC3, FC4, FC5) and 1 Trigger</li>
+</ol>
+<h2 id="classes">Classes</h2>
+${Object.entries(CLASSES).map(([cls,info])=>`<h3 style="color:${info.color}">${cls.toUpperCase()}</h3><p>${info.desc}</p><div class="callout">✦ ${info.bonus}</div>`).join('')}
+<h2 id="perks-f">Perks & Features</h2>
+<p>Choose 2 Perks at creation. Features are words/phrases that can be invoked once per engagement for +X to a roll. They evolve through play.</p>
+<h1 id="skills">SKILLS</h1>
+<table class="rule-table"><tr><th>Pillar</th><th>Power</th><th>Resolve</th><th>Focus</th></tr>
+<tr><td><strong>Body</strong></td><td>Strength, force</td><td>Endurance</td><td>Reflex, agility</td></tr>
+<tr><td><strong>Mind</strong></td><td>Intellect</td><td>Willpower</td><td>Perception</td></tr>
+<tr><td><strong>Spirit</strong></td><td>Presence</td><td>Morale</td><td>Intuition, empathy</td></tr></table>
+<h2 id="dice-alloc">Dice Allocation</h2>
+<p>Assign D6, D8, or D10 to each pillar. D6 = baseline, D8 = trained, D10 = exceptional.</p>
+<h2 id="skill-pool">Skill Pool</h2>
+<p>Distribute <strong>4 skill points</strong> at creation (max 2 per skill). Each point = +1 die rolled for that skill. Take highest die as result.</p>
+<h1 id="system">GAME SYSTEM</h1>
+<h2 id="rolls">How Rolls Work</h2>
+<ol><li>Apply features if applicable</li><li>Roll dice pool</li><li>Take highest die</li><li>Apply stat modifiers</li><li>Apply stress OR "Do you look at it?" (not both)</li><li>Apply momentum</li><li>Compare vs threshold</li></ol>
+<h2 id="thresh">Success Thresholds</h2>
+<table class="rule-table"><tr><th>Difficulty</th><th>Target</th></tr>
+<tr><td>Trivial</td><td>4</td></tr><tr><td>Standard</td><td>6</td></tr><tr><td>Hard</td><td>8</td></tr><tr><td>Extreme</td><td>10+</td></tr></table>
+<h2 id="crits">Criticals & Chaining</h2>
+<p><strong>Nat 20:</strong> Auto-success, double damage in combat.</p>
+<p><strong>Nat 1:</strong> Auto-fail, lose all stored frames in combat.</p>
+<p><strong>Dice Chaining:</strong> Critical on a skill die → roll next size up with advantage, take that result.</p>
+<h2 id="leveling">Leveling Up</h2>
+<p>Milestone-based. <strong>Even levels:</strong> Enhance 2 AFC abilities + add 1 new AFC. <strong>Odd levels:</strong> Add 2 new abilities to KC.</p>
+<h1 id="combat">COMBAT</h1>
+<h2 id="overview">Overview</h2>
+<p>Non-initiative combat. Everyone starts Frame 1. Players deliberate, declare simultaneously, DM chooses enemy actions. On each active frame: resolve all abilities, then choose next. End of track: store ≤2 remaining frames.</p>
+<div class="callout">Every 5 Action Tracks (40 frames): all FC costs increase by +1.</div>
+<h2 id="conditions">Starting Conditions</h2>
+<table class="rule-table"><tr><th>Condition</th><th>Effect</th></tr>
+<tr><td>Surprised</td><td>Surprised party starts on Frame 5</td></tr>
+<tr><td>Stealth</td><td>Hidden party acts freely until noticed</td></tr>
+<tr><td>Prepared</td><td>Prepared party starts with 2 stored frames</td></tr></table>
+<h2 id="grapple">Grapple Rules</h2>
+<p>Punch (FC2) → Grapple Attempt (Power of Body vs Resolve of Body). Every 2 frames: Grapple Check. While grappling: <strong>1f Move</strong>, <strong>3f Smack</strong> (3+3 dmg), <strong>4f Throw</strong> (5+5 dmg, ends grapple).</p>
+<h2 id="weapons">Weapons — Advanced</h2>
+<p>Supernatural weapons may require minimum stats. They override equipped AFC abilities. Equip mid-combat: 5 frames. Unequip: 2 frames (AFCs revert).</p>
+<h2 id="stress-r">Stress & Exhaustion</h2>
+<p>Spend stress to Dash or lower FC by 1. Max 1 per move. At 5+ stress: <strong>Exhaustion</strong> — disadvantage on all attack rolls and saving throws.</p>
+<h2 id="stun-r">Stun</h2>
+<p>Static number on each ability. Target loses X frames from end of current track. Excess carries to next track. Reduce stun by spending stored frames. Target always finishes initiated ability first.</p>
+<h2 id="rest">Rest Chart</h2>
+<table class="rule-table"><tr><th>Stress</th><th>Sleep</th><th>Daily Life</th></tr>
+<tr><td>1</td><td>15 min (DC10)</td><td>1 Hour</td></tr>
+<tr><td>2</td><td>1 Hour</td><td>2 Hours</td></tr>
+<tr><td>3</td><td>2 Hours</td><td>4 Hours</td></tr>
+<tr><td>4</td><td>4 Hours</td><td>8 Hours</td></tr>
+<tr><td>5+</td><td>8 Hours</td><td>Must sleep</td></tr></table>
+<h1 id="catalogs">ABILITY CATALOGS</h1>
+<p>The full starting catalogs for each class. Every player begins with access to all abilities listed here — add them to your Known Catalog (KC) during character creation, then equip one per AFC slot (FC3/4/5).</p>
+<div class="callout">Abilities not in your KC can still be learned through play — finding Books, leveling up (odd levels: +2 to KC), or DM rewards.</div>
+
+<h2 id="cat-fighter" style="color:var(--fighter)">FIGHTER CATALOG</h2>
+<p style="font-family:var(--font-mono);font-size:10px;color:var(--text-mid)">Class Bonus: +1 damage on all basic punches · Can conjure any basic weapon</p>
+<h3>FC 3</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Fighter.fc3.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 4</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Fighter.fc4.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 5</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Fighter.fc5.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>Triggers</h3>
+${CATALOG.Fighter.triggers.map(t=>`<div class="trig-entry"><div class="trig-entry-name">${t.name}</div><div class="trig-entry-cond">IF: ${t.cond}</div></div>`).join('')}
+
+<h2 id="cat-wizzard" style="color:var(--wizzard)">WIZZARD CATALOG</h2>
+<p style="font-family:var(--font-mono);font-size:10px;color:var(--text-mid)">Class Bonus: -1 damage on all basic punches · Wins through creativity and stun</p>
+<h3>FC 3</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Wizzard.fc3.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 4</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Wizzard.fc4.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 5</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Wizzard.fc5.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>Triggers</h3>
+${CATALOG.Wizzard.triggers.map(t=>`<div class="trig-entry"><div class="trig-entry-name">${t.name}</div><div class="trig-entry-cond">IF: ${t.cond}</div></div>`).join('')}
+
+<h2 id="cat-savant" style="color:var(--savant)">SAVANT CATALOG</h2>
+<p style="font-family:var(--font-mono);font-size:10px;color:var(--text-mid)">Class Bonus: +0 on all basic punches · Support and indirect damage</p>
+<h3>FC 3</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Savant.fc3.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 4</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Savant.fc4.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 5</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Savant.fc5.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>Triggers</h3>
+${CATALOG.Savant.triggers.map(t=>`<div class="trig-entry"><div class="trig-entry-name">${t.name}</div><div class="trig-entry-cond">IF: ${t.cond}</div></div>`).join('')}
+
+<h2 id="cat-healer" style="color:var(--healer)">HEALER CATALOG</h2>
+<p style="font-family:var(--font-mono);font-size:10px;color:var(--text-mid)">Class Bonus: Punch replaced with Healing Touch (D6 heal)</p>
+<h3>FC 3</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Healer.fc3.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 4</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Healer.fc4.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>FC 5</h3>
+<table class="cat-table"><thead><tr><th>Name</th><th>Description</th><th>Mod</th><th>DMG</th><th>STUN</th><th>Range</th></tr></thead><tbody>
+${CATALOG.Healer.fc5.map(a=>`<tr><td>${a.name}</td><td>${a.desc}</td><td>${a.mod}</td><td>${a.dmg}</td><td>${a.stun}</td><td>${a.range}</td></tr>`).join('')}
+</tbody></table>
+<h3>Triggers</h3>
+${CATALOG.Healer.triggers.map(t=>`<div class="trig-entry"><div class="trig-entry-name">${t.name}</div><div class="trig-entry-cond">IF: ${t.cond}</div></div>`).join('')}
+`;}
+
+// ══════════════════════════════════════════════
+//  SESSION / LOBBY
+// ══════════════════════════════════════════════
+function genCode(){return'TICK-'+Math.floor(1000+Math.random()*9000)}
+function quickCreate(){
+  const n=document.getElementById('quick-name').value.trim();
+  if(!n){toast('Enter your name!','error');return;}
+  G.session={code:genCode(),isDM:true,playerName:n,players:[{name:n,role:'DM'}]};
+  updNavSession();toast(`Session ${G.session.code} created!`,'success');navigate('lobby');
+}
+function quickJoin(){
+  const n=document.getElementById('quick-name').value.trim();
+  const code=document.getElementById('quick-code').value.trim().toUpperCase();
+  if(!n||!code){toast('Fill in all fields!','error');return;}
+  G.session={code,isDM:false,playerName:n,players:[{name:'DM',role:'DM'},{name:n,role:'Player'}]};
+  updNavSession();toast(`Joined ${code}!`,'success');navigate('lobby');
+}
+function updNavSession(){
+  const s=G.session;
+  document.getElementById('nav-session-code').textContent=s?s.code:'——';
+  document.getElementById('nav-session-role').textContent=s?`${s.playerName} · ${s.isDM?'DM':'Player'}`:'Not in session';
+  document.getElementById('nav-session-players').innerHTML=s?s.players.map(p=>`<div class="session-dot">${p.name} (${p.role})</div>`).join(''):'';
+}
+
+function renderLobby(){
+  const el=document.getElementById('lobby-content');
+  const s=G.session;
+  if(!s){
+    el.innerHTML=`
+      <div class="session-card"><div class="session-card-title">CREATE SESSION (DM)</div>
+        <div class="form-group"><label class="form-label">Your Name</label><input type="text" id="lob-dm" placeholder="DM name..."></div>
+        <button class="btn btn-primary" onclick="lobCreate()">Create Session</button>
+      </div>
+      <div class="session-card"><div class="session-card-title">JOIN SESSION</div>
+        <div class="form-group"><label class="form-label">Your Name</label><input type="text" id="lob-pname" placeholder="Your name..."></div>
+        <div class="form-group"><label class="form-label">Session Code</label><input type="text" id="lob-code" placeholder="TICK-XXXX" style="letter-spacing:4px;font-family:var(--font-mono);text-transform:uppercase" maxlength="10"></div>
+        <button class="btn btn-outline" onclick="lobJoin()">Join</button>
+      </div>`;
+    return;
+  }
+  el.innerHTML=`
+    <div class="session-card"><div class="session-card-title">SESSION ACTIVE</div>
+      <div style="font-size:10px;color:var(--text-dim);font-family:var(--font-mono);margin-bottom:4px">Share this code:</div>
+      <div class="session-code-display" onclick="copyCode('${s.code}')" title="Click to copy">${s.code}</div>
+      <div class="text-xs text-dim">Click to copy</div>
+    </div>
+    <div class="session-card"><div class="session-card-title">PLAYERS (${s.players.length})</div>
+      ${s.players.map(p=>`<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);padding:9px 12px;margin-bottom:6px"><div style="width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 5px var(--lime)"></div><div style="flex:1;font-weight:600">${p.name}</div><div class="tag">${p.role}</div></div>`).join('')}
+      ${s.isDM?`
+        <div class="divider"></div>
+        <div class="form-group"><label class="form-label">Add Player Manually</label>
+          <div style="display:flex;gap:8px"><input type="text" id="add-p-name" placeholder="Player name..."><button class="btn btn-outline btn-sm" onclick="addPlayerManual()">Add</button></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-primary" style="flex:1" onclick="navigate('combat')">⚡ Start Combat</button>
+          <button class="btn btn-danger btn-sm" onclick="endSess()">End Session</button>
+        </div>
+      `:`<button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="endSess()">Leave</button>`}
+    </div>
+  `;
+}
+function lobCreate(){const n=document.getElementById('lob-dm')?.value.trim();if(!n){toast('Enter name!','error');return;}G.session={code:genCode(),isDM:true,playerName:n,players:[{name:n,role:'DM'}]};updNavSession();toast('Session created!','success');renderLobby();}
+function lobJoin(){const n=document.getElementById('lob-pname')?.value.trim();const code=document.getElementById('lob-code')?.value.trim().toUpperCase();if(!n||!code){toast('Fill all fields!','error');return;}G.session={code,isDM:false,playerName:n,players:[{name:'DM',role:'DM'},{name:n,role:'Player'}]};updNavSession();toast(`Joined ${code}!`,'success');renderLobby();}
+function addPlayerManual(){const n=document.getElementById('add-p-name')?.value.trim();if(!n)return;G.session.players.push({name:n,role:'Player'});updNavSession();renderLobby();}
+function endSess(){if(!confirm('End/leave session?'))return;G.session=null;updNavSession();renderLobby();}
+function copyCode(c){navigator.clipboard?.writeText(c).then(()=>toast('Code copied!','success'));}
+
+// ══════════════════════════════════════════════
+//  COMBAT
+// ══════════════════════════════════════════════
+const cs=G.combat;
+function isDM(){return!G.session||G.session.isDM;}
+
+function renderCombat(){
+  document.getElementById('combat-subtitle').textContent=`// TRACK ${cs.actionTrack} : FRAME ${cs.currentFrame}`;
+  renderCombatHeader();renderCombatLeft();renderCombatCenter();renderCombatLog();
+}
+
+function renderCombatHeader(){
+  const el=document.getElementById('combat-header-btns');
+  if(isDM()){
+    el.innerHTML=`
+      <button class="btn btn-outline btn-sm" onclick="openAddPlayer()">+ Player</button>
+      <button class="btn btn-danger btn-sm" onclick="openAddEnemy()">+ Enemy</button>
+      <button class="btn btn-primary btn-sm" onclick="advFrame()">▶ Frame ${cs.currentFrame+1>8?'(End Track)':cs.currentFrame+1}</button>
+      <button class="btn btn-outline btn-sm" onclick="endTrack()">End Track</button>
+      <button class="btn btn-danger btn-sm" onclick="resetCombat()">Reset</button>
+    `;
+  } else {
+    el.innerHTML=`<span class="text-mono text-dim text-xs">Player view — submit your moves below</span>`;
+  }
+}
+
+function renderCombatLeft(){
+  const el=document.getElementById('combat-left');
+  const players=cs.combatants.filter(c=>!c.isEnemy);
+  const enemies=cs.combatants.filter(c=>c.isEnemy);
+  el.innerHTML=`
+    <div class="combat-col-label"><span style="color:var(--lime)">◈</span> PLAYERS</div>
+    ${players.map(c=>combatantCard(c)).join('')}
+    ${!players.length?'<div class="text-dim text-xs text-mono" style="margin-bottom:10px">No players — add from Characters tab</div>':''}
+    <div class="combat-col-label" style="margin-top:10px;color:var(--red)">◈ ENEMIES</div>
+    ${enemies.map(c=>combatantCard(c)).join('')}
+    ${!enemies.length?'<div class="text-dim text-xs text-mono">No enemies yet</div>':''}
+  `;
+}
+
+function combatantCard(c){
+  const hpPct=Math.max(0,(c.hp/c.maxHp)*100);
+  const hpC=hpPct>60?'var(--lime)':hpPct>30?'var(--gold)':'var(--red)';
+  const hasMove=c.currentMoveFC!==null;
+  const accentColor=c.isEnemy?'var(--enemy)':c.class?`var(--${c.class.toLowerCase()})`:hasMove?'var(--lime)':'var(--orange)';
+  return`
+  <div class="combat-char-card ${hasMove?'is-active':''} ${c.isDown?'is-down':''} ${c.isEnemy?'is-enemy':''}">
+    <div class="ccc-stripe" style="background:linear-gradient(90deg,${accentColor},transparent)"></div>
+    <div class="ccc-header">
+      <div class="ccc-name">${c.name}</div>
+      <span class="class-tag class-${c.class||'Enemy'}" style="font-size:9px">${c.class||'Enemy'}</span>
+      ${c.isDown?'<span style="font-family:var(--font-mono);font-size:9px;color:var(--red)">DOWN</span>':''}
+    </div>
+    <div class="ccc-body">
+      <div class="ccc-hp-row">
+        <div style="font-size:9px;color:var(--text-dim);font-family:var(--font-mono);width:18px">HP</div>
+        <div class="hp-bar-wrap" style="flex:1"><div class="hp-bar-fill" style="width:${hpPct}%;background:${hpC}"></div></div>
+        <div class="ccc-hp-val" style="color:${hpC}">${c.hp}/${c.maxHp}</div>
+      </div>
+      <div class="ccc-stats-row">
+        <div class="ccc-stat">AC <span>${c.ac}</span></div>
+        <div class="ccc-stat" title="Stress — 5 = Exhaustion">STR <span style="color:${c.stress>=5?'var(--red)':c.stress>=3?'var(--gold)':'var(--gold2)'}">${c.stress}/5${c.stress>=5?' ⚠':''}</span></div>
+        ${c.momentum?`<div class="ccc-stat" title="Momentum bonus">MOM <span style="color:var(--lime)">+${c.momentum}</span></div>`:''}
+        ${c.storedFrames>0?`<div class="ccc-stat" title="Stored frames from previous track">+${c.storedFrames}<span style="color:var(--gold2)"> STORED</span></div>`:''}
+        ${c.stun>0?`<div class="ccc-stat" title="Stunned — cannot act"><span style="color:var(--red)">STUN ${c.stun}f 🔴</span></div>`:''}
+      </div>
+      ${hasMove?`<div class="ccc-move-row"><div class="ccc-move-name">${c.currentMoveName}</div><div class="ccc-move-fc">FC${c.currentMoveFC}</div></div>`:''}
+    </div>
+    <div class="ccc-actions">
+      ${isDM()?`
+        <button class="btn btn-danger btn-xs" onclick="adjHP('${c.id}',-1)" title="Damage">-HP</button>
+        <button class="btn btn-lime btn-xs" onclick="adjHP('${c.id}',1)" title="Heal">+HP</button>
+        <button class="btn btn-outline btn-xs" onclick="hpModal('${c.id}')">HP±</button>
+        <button class="btn btn-gold btn-xs" onclick="stunModal('${c.id}')">Stun</button>
+        ${c.isDown?`<button class="btn btn-lime btn-xs" onclick="revive('${c.id}')">Revive</button>`:''}
+        <button class="btn btn-danger btn-xs" onclick="rmCombatant('${c.id}')">✕</button>
+      `:`<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${c.id}')">Submit Move</button>`}
+    </div>
+  </div>`;
+}
+
+function renderCombatCenter(){
+  const el=document.getElementById('combat-center');
+  const resolving=cs.combatants.filter(c=>!c.isDown&&c.currentMoveFC!==null&&c.moveStartFrame!==null&&(c.moveStartFrame+c.currentMoveFC-1)===cs.currentFrame);
+  let h='';
+  if(cs.fcPenalty>0) h+=`<div class="penalty-banner"><span class="penalty-banner-blink">⚠</span> FC PENALTY: All ability costs +${cs.fcPenalty}</div>`;
+  h+=`
+    <div class="action-track-wrap">
+      <div class="track-meta">
+        <div><div class="track-big">TRACK ${cs.actionTrack}</div><div class="track-info">Frame <span>${cs.currentFrame}</span>/8 | Total: <span>${cs.totalFrames}</span></div></div>
+        ${isDM()?`<div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="prevFrame()" ${cs.currentFrame<=1?'disabled':''}>◀ Prev</button>
+          <button class="btn btn-primary btn-sm" onclick="advFrame()">▶ Advance</button>
+        </div>`:''}
+      </div>
+      <div class="action-track" id="action-track-grid"></div>
+    </div>
+  `;
+  if(resolving.length){
+    h+=`<div class="resolve-panel"><div class="resolve-panel-title">⚡ RESOLVING THIS FRAME</div>${
+      resolving.map(c=>{
+        const ab=findAbilityData(c.class,c.currentMoveName);
+        return`<div class="resolve-card"><div><div style="font-weight:600">${c.name}</div><div class="resolve-card-move">${c.currentMoveName}</div></div>${ab?`
+          <div class="resolve-stat"><div class="resolve-stat-val dmg">${ab.dmg}</div><div class="resolve-stat-lbl">DMG</div></div>
+          <div class="resolve-stat"><div class="resolve-stat-val stun">${ab.stun}</div><div class="resolve-stat-lbl">STUN</div></div>
+          <div class="resolve-stat"><div class="resolve-stat-val" style="font-size:10px;color:var(--text-mid)">${ab.range}</div><div class="resolve-stat-lbl">RANGE</div></div>
+        `:''}</div>`;
+      }).join('')
+    }</div>`;
+  }
+  if(isDM()){
+    h+=`<div style="display:flex;gap:8px;flex-wrap:wrap">${cs.combatants.filter(c=>!c.isDown).map(c=>submitPanel(c)).join('')}</div>`;
+  }
+  el.innerHTML=h;
+  renderTrackGrid();
+}
+
+function renderTrackGrid(){
+  const g=document.getElementById('action-track-grid');
+  if(!g) return;
+  g.innerHTML='';
+  for(let f=1;f<=8;f++){
+    const cell=document.createElement('div');
+    cell.className=`frame-cell ${f===cs.currentFrame?'is-current':''}`;
+    const num=document.createElement('div');num.className='frame-num';num.textContent=`F${f}`;
+    cell.appendChild(num);
+    const slots=document.createElement('div');slots.className='frame-slots';
+    cs.combatants.forEach(c=>{
+      if(c.isDown) return;
+      if(c.stun>0){const ss=Math.max(1,9-c.stun);if(f>=ss){const s=document.createElement('div');s.className='frame-slot slot-stun';s.textContent=c.name.slice(0,4)+' STN';slots.appendChild(s);}}
+      if(c.currentMoveFC!==null&&c.moveStartFrame!==null){
+        const rf=c.moveStartFrame+c.currentMoveFC-1;
+        if(f>=c.moveStartFrame&&f<=rf){const s=document.createElement('div');const isr=f===rf;s.className=`frame-slot ${c.isEnemy?(isr?'slot-enemy-res':'slot-enemy-ch'):(isr?'slot-resolve':'slot-channel')}`;s.textContent=c.name.slice(0,5)+(isr?' ⚡':'');s.title=`${c.name}: ${c.currentMoveName}`;slots.appendChild(s);}
+      }
+      if(c.storedFrames>0&&f>=9-c.storedFrames){const s=document.createElement('div');s.className='frame-slot slot-stored';s.textContent=c.name.slice(0,4)+'+';slots.appendChild(s);}
+    });
+    cell.appendChild(slots);g.appendChild(cell);
+  }
+}
+
+function submitPanel(c){
+  const framesThisTrack=8-cs.currentFrame; // frames remaining AFTER current (moves start next frame)
+  const totalAvail=framesThisTrack+c.storedFrames;
+  const hasMove=c.currentMoveFC!==null;
+  const isStunned=c.stun>0;
+  const isExhausted=(c.stress>=5);
+  if(isStunned){
+    return`<div class="submit-panel" style="flex:1;min-width:170px;border-color:var(--red)">
+      <div class="submit-panel-title">${c.name} <span style="color:var(--red);font-size:10px;margin-left:auto">STUNNED</span></div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--red);padding:8px 0">
+        🔴 Cannot act — ${c.stun} stun frame${c.stun!==1?'s':''} remaining<br>
+        <span style="color:var(--text-dim);font-size:9px">Spend stored frames to reduce stun</span>
+      </div>
+      ${c.storedFrames>0?`<button class="btn btn-gold btn-sm" style="width:100%" onclick="useStoredVsStun('${c.id}')">Use stored frame vs stun (${c.storedFrames} avail)</button>`:''}
+    </div>`;
+  }
+  return`
+  <div class="submit-panel" style="flex:1;min-width:170px;${hasMove?'border-color:var(--lime)':''}">
+    <div class="submit-panel-title">${c.name} ${hasMove?`<span style="color:var(--lime);font-size:11px;margin-left:auto">✓ FC${c.currentMoveFC} F${c.moveStartFrame}→F${c.moveStartFrame+c.currentMoveFC-1}</span>`:''}</div>
+    <div class="text-xs text-mono text-dim" style="margin-bottom:6px">
+      Frames available: <span style="color:var(--orange)">${totalAvail}</span>
+      ${c.storedFrames>0?`<span style="color:var(--gold2)"> (${c.storedFrames} stored)</span>`:''}
+      ${isExhausted?`<span style="color:var(--red)"> · EXHAUSTED</span>`:''}
+    </div>
+    <div class="form-group" style="margin-bottom:6px">
+      <label class="form-label">Ability</label>
+      <input type="text" id="mn_${c.id}" placeholder="Ability name..." value="${c.currentMoveName||''}">
+    </div>
+    <div class="form-group" style="margin-bottom:6px">
+      <label class="form-label">Frame Cost</label>
+      <select id="mf_${c.id}">
+        <option value="1">FC 1 — Move</option>
+        <option value="2" ${!c.currentMoveFC||c.currentMoveFC===2?'selected':''}>FC 2 — Punch</option>
+        <option value="3" ${c.currentMoveFC===3?'selected':''}>FC 3 — AFC</option>
+        <option value="4" ${c.currentMoveFC===4?'selected':''}>FC 4 — AFC</option>
+        <option value="5" ${c.currentMoveFC===5?'selected':''}>FC 5 — AFC</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <div class="form-group" style="flex:1;margin:0">
+        <label class="form-label">Stress spend <span style="color:var(--text-dim)">(max 1, -1FC)</span></label>
+        <select id="ms_${c.id}" ${isExhausted?'disabled':''}>
+          <option value="0">0 — no stress</option>
+          <option value="1" ${isExhausted?'disabled':''}>1 — -1FC cost</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:1;margin:0">
+        <label class="form-label">Momentum</label>
+        <input type="number" id="mm_${c.id}" value="${c.momentum||0}" min="0" max="10" style="width:100%"
+          onchange="updateMomentum('${c.id}',this.value)">
+      </div>
+    </div>
+    ${c.afc3||c.afc4||c.afc5?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px">
+      ${c.afc3?`<div class="tag" style="cursor:pointer;font-size:9px" onclick="qs('${c.id}','${(c.afc3||'').replace(/'/g,"\\'")}',3)" title="Click to quick-select">FC3:${(c.afc3||'').slice(0,8)}</div>`:''}
+      ${c.afc4?`<div class="tag" style="cursor:pointer;font-size:9px" onclick="qs('${c.id}','${(c.afc4||'').replace(/'/g,"\\'")}',4)" title="Click to quick-select">FC4:${(c.afc4||'').slice(0,8)}</div>`:''}
+      ${c.afc5?`<div class="tag" style="cursor:pointer;font-size:9px" onclick="qs('${c.id}','${(c.afc5||'').replace(/'/g,"\\'")}',5)" title="Click to quick-select">FC5:${(c.afc5||'').slice(0,8)}</div>`:''}
+    </div>`:''}
+    <div style="display:flex;gap:5px">
+      <button class="btn btn-primary btn-sm" style="flex:1" onclick="submitMove('${c.id}')">SUBMIT</button>
+      ${hasMove?`<button class="btn btn-outline btn-sm" onclick="clearMove('${c.id}')">CLR</button>`:''}
+    </div>
+  </div>`;
+}
+function qs(id,name,fc){const m=document.getElementById('mn_'+id);const f=document.getElementById('mf_'+id);if(m)m.value=name;if(f)f.value=fc;}
+function updateMomentum(id,val){const c=cs.combatants.find(x=>x.id===id);if(c){c.momentum=Math.max(0,parseInt(val)||0);}}
+function useStoredVsStun(id){
+  const c=cs.combatants.find(x=>x.id===id);
+  if(!c||c.storedFrames<=0||c.stun<=0) return;
+  c.storedFrames--;c.stun=Math.max(0,c.stun-1);
+  combatLog(`${c.name} spends 1 stored frame — stun now ${c.stun}`,'resolve');
+  renderCombat();
+}
+
+function renderCombatLog(){
+  const el=document.getElementById('combat-log');
+  el.innerHTML=cs.log.slice(-60).reverse().map(e=>`
+    <div class="combat-log-entry log-${e.type||''}">
+      <span class="log-ts">[T${e.track}:F${e.frame}]</span>${e.msg}
+    </div>`).join('');
+}
+
+// Combat actions
+function submitMove(id){
+  const c=cs.combatants.find(x=>x.id===id);
+  if(!c||c.isDown) return;
+  if(c.stun>0){toast(`${c.name} is STUNNED (${c.stun} frames) — cannot act!`,'warn');return;}
+  const name=document.getElementById('mn_'+id)?.value.trim()||'Ability';
+  const fcRaw=parseInt(document.getElementById('mf_'+id)?.value)||2;
+  // Stress: max 1 per move spent on FC reduction
+  const stressSpend=Math.min(1,Math.max(0,parseInt(document.getElementById('ms_'+id)?.value)||0));
+  if(stressSpend>0){
+    if(c.stress>=5){toast(`${c.name} is EXHAUSTED — cannot spend more stress!`,'warn');return;}
+    c.stress=Math.min(5,c.stress+stressSpend);
+    if(c.stress>=5&&!c.conditions?.includes('EXHAUSTED')){
+      if(!c.conditions)c.conditions=[];
+      c.conditions.push('EXHAUSTED');
+      combatLog(`⚠ ${c.name} hits EXHAUSTION! Disadvantage on all rolls.`,'stun');
+    }
+    combatLog(`${c.name} spends 1 stress (now ${c.stress}/5)`,'');
+  }
+  // Effective FC = raw - stress reduction + track penalty
+  const eff=Math.max(1,fcRaw-stressSpend+cs.fcPenalty);
+  // Move starts on the NEXT frame after submission
+  const startFrame=cs.currentFrame+1;
+  const resolveFrame=startFrame+eff-1;
+  c.currentMoveFC=eff;c.currentMoveName=name;c.moveStartFrame=startFrame;
+  combatLog(`${c.name} → [FC${eff}] ${name} | starts F${startFrame}, resolves F${resolveFrame}`,'resolve');
+  renderCombat();
+}
+function clearMove(id){const c=cs.combatants.find(x=>x.id===id);if(c){c.currentMoveFC=null;c.currentMoveName='';c.moveStartFrame=null;}renderCombat();}
+function advFrame(){
+  cs.currentFrame++;cs.totalFrames++;
+  if(cs.currentFrame>8){endTrack();return;}
+  // Tick stun down for each combatant — stun counts from end of track
+  cs.combatants.forEach(c=>{
+    if(c.isDown||c.stun<=0) return;
+    c.stun=Math.max(0,c.stun-1);
+    if(c.stun===0) combatLog(`${c.name} stun cleared — can act again!`,'resolve');
+  });
+  // Auto-clear moves that have resolved
+  cs.combatants.forEach(c=>{
+    if(c.currentMoveFC!==null&&c.moveStartFrame!==null){
+      const resolveF=c.moveStartFrame+c.currentMoveFC-1;
+      if(resolveF<cs.currentFrame){c.currentMoveFC=null;c.currentMoveName='';c.moveStartFrame=null;}
+    }
+  });
+  combatLog(`▶ Frame ${cs.currentFrame}`,'');
+  renderCombat();
+}
+function prevFrame(){
+  if(cs.currentFrame<=1) return;
+  cs.currentFrame--;cs.totalFrames=Math.max(0,cs.totalFrames-1);
+  combatLog(`◀ Back to Frame ${cs.currentFrame}`,'');
+  renderCombat();
+}
+function endTrack(){
+  // Store remaining frames (max 2 total stored)
+  cs.combatants.forEach(c=>{
+    if(c.isDown) return;
+    const remaining=Math.max(0,8-cs.currentFrame+1);
+    const canStore=Math.min(remaining,2-c.storedFrames);
+    if(canStore>0){
+      c.storedFrames=Math.min(2,c.storedFrames+canStore);
+      combatLog(`${c.name} stores ${canStore} frame${canStore>1?'s':''} (total: ${c.storedFrames})`,'');
+    }
+    // Clear move at track end
+    c.currentMoveFC=null;c.currentMoveName='';c.moveStartFrame=null;
+    // Decrement stun by remaining frames in track
+    if(c.stun>0){c.stun=Math.max(0,c.stun-remaining);}
+  });
+  cs.currentFrame=1;cs.actionTrack++;cs.totalFrames=(cs.actionTrack-1)*8;
+  if(cs.actionTrack>1&&(cs.actionTrack-1)%5===0){cs.fcPenalty++;combatLog(`⚠ Every 5 tracks: FC PENALTY now +${cs.fcPenalty}`,'stun');}
+  combatLog(`═══ TRACK ${cs.actionTrack} BEGIN ═══`,'track');
+  renderCombat();
+}
+function adjHP(id,d){const c=cs.combatants.find(x=>x.id===id);if(!c)return;c.hp=Math.min(c.maxHp,Math.max(0,c.hp+d));if(c.hp<=0&&!c.isDown){c.isDown=true;c.stun=0;c.storedFrames=0;c.currentMoveFC=null;combatLog(`💀 ${c.name} is DOWN!`,'down');}renderCombat();}
+function revive(id){const c=cs.combatants.find(x=>x.id===id);if(!c)return;c.isDown=false;c.hp=5;c.stun=0;combatLog(`${c.name} revived to 5 HP!`,'heal');renderCombat();}
+function rmCombatant(id){const c=cs.combatants.find(x=>x.id===id);cs.combatants=cs.combatants.filter(x=>x.id!==id);if(c)combatLog(`${c.name} removed.`,'');renderCombat();}
+function resetCombat(){if(!confirm('Reset combat?'))return;G.combat={combatants:[],currentFrame:1,actionTrack:1,totalFrames:0,fcPenalty:0,log:[]};Object.assign(cs,G.combat);combatLog('═══ COMBAT RESET ═══','track');renderCombat();}
+function combatLog(msg,type){cs.log.push({msg,type:type||'',track:cs.actionTrack,frame:cs.currentFrame});renderCombatLog();}
+
+function hpModal(id){
+  const c=cs.combatants.find(x=>x.id===id);if(!c)return;
+  openModal(`HP — ${c.name}`,`
+    <div class="form-group"><label class="form-label">Set HP directly</label><input type="number" id="m-hp" value="${c.hp}" min="0" max="${c.maxHp}"></div>
+    <div class="form-group"><label class="form-label">Or adjust (±)</label><input type="number" id="m-delta" placeholder="e.g. -5 or 10"></div>
+  `,[
+    {label:'Apply',cls:'btn-primary',fn:()=>{
+      const hp=parseInt(document.getElementById('m-hp').value);const d=parseInt(document.getElementById('m-delta').value)||0;
+      if(!isNaN(hp))c.hp=Math.min(c.maxHp,Math.max(0,hp));
+      if(d!==0){c.hp=Math.min(c.maxHp,Math.max(0,c.hp+d));combatLog(`${c.name}: ${d>0?'+':''}${d} HP`,d>0?'heal':'damage');}
+      if(c.hp<=0&&!c.isDown){c.isDown=true;c.stun=0;c.storedFrames=0;c.currentMoveFC=null;combatLog(`💀 ${c.name} is DOWN!`,'down');}
+      closeModal();renderCombat();
+    }},
+    {label:'Cancel',cls:'btn-outline',fn:closeModal}
+  ]);
+}
+function stunModal(id){
+  const c=cs.combatants.find(x=>x.id===id);if(!c)return;
+  openModal(`Apply Stun — ${c.name}`,`<div class="form-group"><label class="form-label">Stun Frames</label><input type="number" id="m-stun" value="2" min="0" max="20"></div>`,[
+    {label:'Apply',cls:'btn-primary',fn:()=>{const a=parseInt(document.getElementById('m-stun').value)||0;c.stun+=a;combatLog(`${c.name}: ${a} stun applied`,'stun');closeModal();renderCombat();}},
+    {label:'Cancel',cls:'btn-outline',fn:closeModal}
+  ]);
+}
+function openAddEnemy(){
+  openModal('Add Enemy',`
+    <div class="form-group"><label class="form-label">Name</label><input type="text" id="e-name" placeholder="Enemy name..."></div>
+    <div class="grid-2"><div class="form-group"><label class="form-label">HP</label><input type="number" id="e-hp" value="20" min="1"></div><div class="form-group"><label class="form-label">AC</label><input type="number" id="e-ac" value="5" min="1"></div></div>
+  `,[
+    {label:'Add Enemy',cls:'btn-danger',fn:()=>{
+      const name=document.getElementById('e-name').value.trim();const hp=parseInt(document.getElementById('e-hp').value)||20;const ac=parseInt(document.getElementById('e-ac').value)||5;
+      if(!name){toast('Enter a name!','error');return;}
+      cs.combatants.push({id:'en'+Date.now(),name,class:'Enemy',isEnemy:true,hp,maxHp:hp,ac,stress:0,storedFrames:0,stun:0,currentMoveFC:null,currentMoveName:'',moveStartFrame:null,isDown:false,conditions:[]});
+      combatLog(`${name} entered the battle!`,'stun');closeModal();renderCombat();
+    }},{label:'Cancel',cls:'btn-outline',fn:closeModal}
+  ]);
+}
+function openAddPlayer(){
+  openModal('Add Player',`
+    <div class="form-group"><label class="form-label">Name</label><input type="text" id="p-name" placeholder="Player name..."></div>
+    <div class="form-group"><label class="form-label">Class</label><select id="p-class">${Object.keys(CLASSES).map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="grid-2"><div class="form-group"><label class="form-label">HP</label><input type="number" id="p-hp" value="35" min="1"></div><div class="form-group"><label class="form-label">AC</label><input type="number" id="p-ac" value="5" min="1"></div></div>
+    <p class="text-dim text-xs">Tip: Go to Characters → select a character → "→ Combat" to auto-fill abilities.</p>
+  `,[
+    {label:'Add Player',cls:'btn-primary',fn:()=>{
+      const name=document.getElementById('p-name').value.trim();const cls=document.getElementById('p-class').value;const hp=parseInt(document.getElementById('p-hp').value)||35;const ac=parseInt(document.getElementById('p-ac').value)||5;
+      if(!name){toast('Enter a name!','error');return;}
+      cs.combatants.push({id:'pl'+Date.now(),name,class:cls,isEnemy:false,hp,maxHp:hp,ac,stress:0,storedFrames:0,stun:0,currentMoveFC:null,currentMoveName:'',moveStartFrame:null,isDown:false,conditions:[]});
+      combatLog(`${name} (${cls}) entered!`,'resolve');closeModal();renderCombat();
+    }},{label:'Cancel',cls:'btn-outline',fn:closeModal}
+  ]);
+}
+function openSubmitModal(id){
+  const c=cs.combatants.find(x=>x.id===id);if(!c)return;
+  openModal(`Submit Move — ${c.name}`,submitPanel(c),[
+    {label:'Submit',cls:'btn-primary',fn:()=>{submitMove(id);closeModal();}},
+    {label:'Cancel',cls:'btn-outline',fn:closeModal}
+  ]);
+}
+
+// ══════════════════════════════════════════════
+//  MODAL & TOAST
+// ══════════════════════════════════════════════
+function openModal(title,bodyHTML,buttons){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=bodyHTML;
+  const f=document.getElementById('modal-footer');f.innerHTML='';
+  (buttons||[]).forEach(b=>{const btn=document.createElement('button');btn.className=`btn ${b.cls||'btn-outline'}`;btn.textContent=b.label;btn.onclick=b.fn;f.appendChild(btn);});
+  document.getElementById('modal-backdrop').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal-backdrop').classList.add('hidden');}
+document.getElementById('modal-backdrop').addEventListener('click',e=>{if(e.target===document.getElementById('modal-backdrop'))closeModal();});
+
+function toast(msg,type){
+  const el=document.createElement('div');
+  el.className=`toast ${type==='error'?'toast-error':type==='success'?'toast-success':type==='warn'?'toast-warn':''}`;
+  el.textContent=msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+combatLog('═══ COMBAT READY ═══','track');
+updNavSession();
+</script>
+</body>
+</html>
